@@ -48,7 +48,7 @@ Lut Lut::Vcc(unsigned inputs){
   return ret;
 }
 Lut Lut::And(unsigned inputs){
-  Lut ret(inputs);
+  Lut ret = Gnd(inputs);
   if(inputs < 6){
     ret._lut[0] = one << ((1<<inputs)-1);
   }
@@ -175,12 +175,12 @@ Lut::Lut(string const & init){
 }
 
 string Lut::str() const{
-    stringstream ret;
-    ret << std::hex;
-    for(size_t i=_lut.size(); i>0; --i){
-      ret << _lut[i-1];
-    }
-    return ret.str();
+  stringstream ret;
+  ret << std::hex;
+  for(size_t i=_lut.size(); i>0; --i){
+    ret << _lut[i-1];
+  }
+  return ret.str();
 }
 
 

@@ -37,6 +37,7 @@ class Lut{
     // Basic modifiers: invert one input or the output
     void invertInput(unsigned input);
     void invert();
+    void setVal(unsigned inputValues, bool val);
     void swapInputs(unsigned i1, unsigned i2);
 
     // Basic queries

@@ -9,7 +9,7 @@ using namespace std;
 bool Lut::equal(Lut const & b) const{
   if(inputCount() != b.inputCount()) return false;
   if(inputCount() < 6){ // Safe while I don't force the unused bits to 0
-    return ((_lut[0] ^ b._lut[0]) & sizeMask[inputCount()]) == 0;
+    return ((_lut[0] ^ b._lut[0]) & lutSizeMask[inputCount()]) == 0;
   }
   else{
     return _lut == b._lut;
@@ -29,11 +29,48 @@ void Lut::invert(){
   }
 }
 
+void Lut::setVal(unsigned inputValues, bool val){
+  unsigned lutChunk = inputValues >> 6;
+  assert(lutChunk < _lut.size());
+  unsigned chunkInd = inputValues & 0x003f;
+  if(val) _lut[lutChunk] |=  (one << chunkInd);
+  else    _lut[lutChunk] &= ~(one << chunkInd);
+}
+
+bool Lut::isGeneralizedAnd() const{
+  // Check if either only one bit is set or only one bit is unset
+  if(inputCount() == 0){
+    return true;
+  }
+  else if(inputCount() <= 6){
+    uint64_t pv =  _lut[0] & lutSizeMask[inputCount()];
+    uint64_t nv = ~_lut[0] & lutSizeMask[inputCount()];
+    bool pand = pv != allZero && (pv & (pv-1)) == allZero;
+    bool nand = nv != allZero && (nv & (nv-1)) == allZero;
+    return pand || nand;
+  }
+  else{
+    size_t zeros=0, ones=0, pands=0, nands=0;
+    for(uint64_t cur : _lut){
+      if(cur == allOne) ++ones;
+      else if((~cur & (~cur-1)) == allZero) ++nands;
+      if(cur == allZero) ++zeros;
+      else if((cur & (cur-1)) == allZero) ++pands;
+    }
+    return (ones  == 0 && nands == 0 && pands == 1)
+        || (zeros == 0 && pands == 0 && nands == 1);
+  }
+}
+
+bool Lut::isGeneralizedXor() const{
+  return equal(Xor(inputCount())) || equal(Exor(inputCount()));
+}
+
 void Lut::invertInput(unsigned input){
   if(input < 6){
     for(LutMask & cur : _lut){
-      LutMask lowerPart = cur & ~mask[input]; 
-      LutMask upperPart = cur &  mask[input];
+      LutMask lowerPart = cur & ~lutInputMask[input]; 
+      LutMask upperPart = cur &  lutInputMask[input];
       int shiftAmount = 1<<input;
       cur = lowerPart << shiftAmount | upperPart >> shiftAmount;
     }
@@ -54,7 +91,7 @@ Lut Lut::getCofactor(unsigned input, bool value) const{
   Lut ret = *this;
   if(input < 6){
     unsigned shiftAmount = 1 << input;
-    LutMask inputMask = value? mask[input] : ~mask[input];
+    LutMask inputMask = value? lutInputMask[input] : ~lutInputMask[input];
     for(LutMask & cur : ret._lut){
       LutMask maskedVal = cur & inputMask;
       // The shift is different depending on the input mask
@@ -74,7 +111,6 @@ Lut Lut::getCofactor(unsigned input, bool value) const{
   return ret;
 }
 
-
 // The 3 following algorithms use a bitmask accumulator rather than an early exit: it is believed - but not tested - to be faster, with fewer instructions and better branch prediction
 
 bool Lut::isDC(unsigned input) const{
@@ -84,7 +120,7 @@ bool Lut::isDC(unsigned input) const{
     for(LutMask cur : _lut){
       acc |= (cur << (1<<input)) ^ cur;
     }
-    return (acc & mask[input]) == allZero;
+    return (acc & lutInputMask[input]) == allZero;
   }
   else{
     LutMask acc = allZero;
@@ -105,7 +141,7 @@ bool Lut::toggles(unsigned input) const{
     for(LutMask cur : _lut){
       acc &= (cur << (1<<input)) ^ cur;
     }
-    return (acc | ~mask[input]) == allOne;
+    return (acc | ~lutInputMask[input]) == allOne;
   }
   else{
     LutMask acc = allOne;
@@ -123,7 +159,7 @@ bool Lut::forcesValue(unsigned input, bool inVal, bool outVal) const{
   assert(input < inputCount());
   LutMask comp = outVal? allOne : allZero;
   if(input<6){
-    LutMask inputMask = inVal? mask[input] : ~mask[input];
+    LutMask inputMask = inVal? lutInputMask[input] : ~lutInputMask[input];
     LutMask acc = allZero;
     for(LutMask cur : _lut){
       acc |= (cur ^ comp);

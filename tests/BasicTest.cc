@@ -44,6 +44,10 @@ void testAnd(){
       cerr << std::hex << "failed with all bits set" << std::endl;
       abort();
     }
+    if(!lut.isGeneralizedAnd()){
+      cerr << "Generalized And check failed for " << i << " input" << std::endl;
+      abort();
+    }
   }
   cout << "And test OK" << std::endl;
 }
@@ -72,6 +76,10 @@ void testOr(){
       cerr << std::hex << "failed with no bit set" << std::endl;
       abort();
     }
+    if(!lut.isGeneralizedAnd()){
+      cerr << "Generalized And check failed for " << i << " input" << std::endl;
+      abort();
+    }
   }
   cout << "Or test OK" << std::endl;
 }
@@ -86,6 +94,10 @@ void testXor(){
       }
     }
     testCofactors(lut);
+    if(!lut.isGeneralizedXor()){
+      cerr << "Generalized And check failed for " << i << " input" << std::endl;
+      abort();
+    }
   }
   cout << "Xor test OK" << std::endl;
 }
