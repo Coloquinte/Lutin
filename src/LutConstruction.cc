@@ -10,32 +10,32 @@
 #include "LutUtils.h"
 
 #include <cassert>
+#include <sstream>
+#include <stdexcept>
 
 using namespace std;
 
-void Lut::invert(){
-  for(LutMask & cur : _lut){
-    cur = ~cur;
+namespace{
+  size_t mapSize(unsigned inputCnt) {
+    return inputCnt >= 6 ? 1ul << (inputCnt-6) : 1ul;
   }
 }
 
-void Lut::invertInput(unsigned input){
-  if(input < 6){
-    for(LutMask & cur : _lut){
-      LutMask lowerPart = cur & ~mask[input]; 
-      LutMask upperPart = cur &  mask[input];
-      int shiftAmount = 1<<input;
-      cur = lowerPart << shiftAmount | upperPart >> shiftAmount;
-    }
-  }
-  else{
-    size_t const stride = 1<<(input-6);
-    for(size_t i=0; i<_lut.size(); i += 2*stride){
-      for(size_t j=i; j<i+stride; ++j){
-        std::swap(_lut[j], _lut[j+stride]);
-      }
-    }
-  }
+// Quick and dirty for now
+bool Lut::isConstant() const{ return isGnd() || isVcc(); }
+bool Lut::isGnd() const{ return equal(Gnd(inputCount())); }
+bool Lut::isVcc() const{ return equal(Vcc(inputCount())); }
+bool Lut::isAnd() const{ return equal(And(inputCount())); }
+bool Lut::isOr() const{ return equal(Or(inputCount())); }
+bool Lut::isNand() const{ return equal(Nand(inputCount())); }
+bool Lut::isNor() const{ return equal(Nor(inputCount())); }
+bool Lut::isXor() const{ return equal(Xor(inputCount())); }
+bool Lut::isExor() const{ return equal(Exor(inputCount())); }
+
+Lut::Lut(unsigned inputs)
+: _inputCnt(inputs)
+, _lut(mapSize(inputs), allZero)
+{
 }
 
 Lut Lut::Gnd(unsigned inputs){
@@ -143,6 +143,44 @@ Lut Lut::Exor(Lut const & a, Lut const & b){
     ret._lut[i] = ~(a._lut[i] ^ b._lut[i]);
   }
   return ret;
+}
+
+Lut::Lut(string const & init){
+  unsigned s = 2;
+  while( (1lu << (s-2)) < init.size()) ++s;
+  if(init.size() != (1lu << s)) throw std::logic_error("Bad string size as init of the Lut");
+
+  _inputCnt = s;
+  _lut.resize(mapSize(_inputCnt));
+
+  for(size_t i=0; i<_lut.size(); ++i){
+    uint64_t val = 0ul;
+    for(size_t j=i*8; j<i*8+8 && j<init.size(); ++j){
+      uint64_t cur = 0ul;
+      char c = init[j];
+      if(c >= '0' && c <= '9'){
+        cur = c-'0';
+      }
+      else if(c >= 'a' && c <= 'f'){
+        cur = c-'a'+10;
+      }
+      else if(c >= 'A' && c <= 'F'){
+        cur = c-'A'+10;
+      }
+      else throw std::logic_error("Invalid character in init of the Lut");
+      val = val << 4 | cur;
+    }
+    _lut[i] = val;
+  }
+}
+
+string Lut::str() const{
+    stringstream ret;
+    ret << std::hex;
+    for(size_t i=_lut.size(); i>0; --i){
+      ret << _lut[i-1];
+    }
+    return ret.str();
 }
 
 

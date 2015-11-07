@@ -6,19 +6,13 @@
 
 using namespace std;
 
-Lut::Lut(unsigned inputs)
-: _inputCnt(inputs)
-, _lut(inputs <= 6? 1 : 1 << (inputs-6), allZero)
-{
-}
-
-bool Lut::equal(Lut const & a, Lut const & b){
-  if(a.inputCount() != b.inputCount()) return false;
-  if(a.inputCount() < 6){ // Safe while I don't force the unused bits to 0
-    return ((a._lut[0] ^ b._lut[0]) & sizeMask[a.inputCount()]) == 0;
+bool Lut::equal(Lut const & b) const{
+  if(inputCount() != b.inputCount()) return false;
+  if(inputCount() < 6){ // Safe while I don't force the unused bits to 0
+    return ((_lut[0] ^ b._lut[0]) & sizeMask[inputCount()]) == 0;
   }
   else{
-    return a._lut == b._lut;
+    return _lut == b._lut;
   }
 }
 
@@ -28,6 +22,32 @@ bool Lut::evaluate(unsigned inputValues) const{
   unsigned chunkInd = inputValues & 0x003f;
   return ((_lut[lutChunk] >> chunkInd) & 0x01) != 0;
 }
+
+void Lut::invert(){
+  for(LutMask & cur : _lut){
+    cur = ~cur;
+  }
+}
+
+void Lut::invertInput(unsigned input){
+  if(input < 6){
+    for(LutMask & cur : _lut){
+      LutMask lowerPart = cur & ~mask[input]; 
+      LutMask upperPart = cur &  mask[input];
+      int shiftAmount = 1<<input;
+      cur = lowerPart << shiftAmount | upperPart >> shiftAmount;
+    }
+  }
+  else{
+    size_t const stride = 1<<(input-6);
+    for(size_t i=0; i<_lut.size(); i += 2*stride){
+      for(size_t j=i; j<i+stride; ++j){
+        std::swap(_lut[j], _lut[j+stride]);
+      }
+    }
+  }
+}
+
 
 Lut Lut::getCofactor(unsigned input, bool value) const{
   assert(input < inputCount());

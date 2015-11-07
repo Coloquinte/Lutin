@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
 
 class Lut{
     public:
@@ -11,7 +12,9 @@ class Lut{
 
     public:
     // Contructors (default is the ground lut)
-    Lut(unsigned inputs); 
+    Lut(unsigned inputs);
+    // Create a Lut from an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
+    Lut(std::string const & init);
 
     static Lut Gnd  (unsigned inputs);
     static Lut Vcc  (unsigned inputs);
@@ -34,19 +37,30 @@ class Lut{
     // Basic modifiers: invert one input or the output
     void invertInput(unsigned input);
     void invert();
+    void swapInputs(unsigned i1, unsigned i2);
 
-    public:
     // Basic queries
     unsigned inputCount() const { return _inputCnt; }
-    static bool equal(Lut const & a, Lut const & b);
-
     bool evaluate(unsigned inputValues) const;
 
     bool isConstant() const;
-    bool isGnd() const;
-    bool isVcc() const;
+    bool isGnd  () const;
+    bool isVcc  () const;
+    bool isAnd  () const;
+    bool isOr   () const;
+    bool isNand () const;
+    bool isNor  () const;
+    bool isXor  () const;
+    bool isExor () const;
+
+    // And/Xor with some input and output inversions
     bool isGeneralizedAnd() const;
     bool isGeneralizedXor() const;
+
+    bool operator==(Lut const & b){ return  equal(b); }
+    bool operator!=(Lut const & b){ return !equal(b); }
+
+    std::string str() const;
 
     public:
     /*
@@ -63,12 +77,13 @@ class Lut{
     Lut getCofactor (unsigned input, bool value) const;
 
     private:
+    // Helper functions
+    bool equal(Lut const & b) const;
+
+    private:
     unsigned _inputCnt;
     std::vector<LutMask> _lut;
 };
-
-inline bool operator==(Lut const & a, Lut const & b){ return  Lut::equal(a, b); }
-inline bool operator!=(Lut const & a, Lut const & b){ return !Lut::equal(a, b); }
 
 #endif
 
