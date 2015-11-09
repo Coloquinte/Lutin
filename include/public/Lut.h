@@ -26,6 +26,7 @@ class Lut{
     static Lut Exor (unsigned inputs);
 
     // Considering same-size Luts with a common input set
+    static Lut Not  (Lut const & a);
     static Lut And  (Lut const & a, Lut const & b);
     static Lut Or   (Lut const & a, Lut const & b);
     static Lut Nand (Lut const & a, Lut const & b);

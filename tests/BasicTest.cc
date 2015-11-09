@@ -20,73 +20,97 @@ void testCofactors(Lut const & lut){
   }
 }
 
-void testAnd(){
-  for(unsigned i=0; i<15u; ++i){
-    Lut lut = Lut::And(i);
-    for(unsigned in=0; in<i; ++in){
-      if(!lut.forcesValue(in, false, false)){
-        cerr << i << " inputs And gate forcing failed on input " << in << std::endl;
-      }
-      if(lut.forcesValue(in, true, false) || lut.forcesValue(in, true, true) || lut.forcesValue(in, false, true)){
-        cerr << i << " inputs And gate false positive on input " << in << std::endl;
-      }
-    }
-    testCofactors(lut);
-    for(unsigned mask=0; mask+1 < (1u<<i); ++mask){
-      if(lut.evaluate(mask)){
-        cerr << i << " inputs And gate ";
-        cerr << std::hex << "failed with input mask " << mask << std::endl;
-        abort();
-      }
-    }
-    if(!lut.evaluate( (1u<<i)-1 )){
-      cerr << i << " inputs And gate ";
-      cerr << std::hex << "failed with all bits set" << std::endl;
+Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
+    Lut ret = Lut::Gnd(inputCnt);
+    ret.setVal(inputValues & ((1u << inputCnt)-1), true);
+    if(inverted) ret.invert();
+    return ret;
+}
+
+void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
+  Lut lut = getGeneralizedAnd(inputCnt, inputValues, inverted);
+  for(unsigned in=0; in<inputCnt; ++in){
+    bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
+    if(!lut.forcesValue(in, forcingIn, forcedVal)){
+      cerr << inputCnt << " inputs generalized And gate forcing failed on input " << in << std::endl;
       abort();
     }
-    if(!lut.isGeneralizedAnd()){
-      cerr << "Generalized And check failed for " << i << " input" << std::endl;
+    if(lut.forcesValue(in, forcingIn, !forcedVal) || lut.forcesValue(in, !forcingIn, true) || lut.forcesValue(in, !forcingIn, false)){
+      cerr << inputCnt << " inputs generalized And gate false positive on input " << in << std::endl;
       abort();
     }
   }
+  testCofactors(lut);
+  if(!lut.isGeneralizedAnd()){
+    cerr << "Generalized And check failed for " << inputCnt << " input" << std::endl;
+    abort();
+  }
+}
+
+void testGeneralizedAnds(){
+  for(unsigned inCnt=0; inCnt<15u; ++inCnt){
+    for(unsigned inMask=0; inMask < (1u<<inCnt); ++inMask){
+      testGeneralizedAnd(inCnt, inMask, false);
+      testGeneralizedAnd(inCnt, inMask, true);
+    }
+  }
+  cout << "Generalized And test OK" << std::endl;
+}
+
+void testAnd(){
+  for(unsigned i=0; i<15u; ++i){
+    Lut lut = Lut::And(i);
+    Lut reference = getGeneralizedAnd(i, -1, false);
+    if(reference != lut){
+      cerr << "Or check failed" << std::endl;
+      abort();
+    }
+  }
+
   cout << "And test OK" << std::endl;
 }
 
 void testOr(){
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::Or(i);
-    for(unsigned in=0; in<i; ++in){
-      if(!lut.forcesValue(in, true, true)){
-        cerr << i << " inputs Or gate forcing failed on input " << in << std::endl;
-      }
-      if(lut.forcesValue(in, false, false) || lut.forcesValue(in, false, true) || lut.forcesValue(in, true, false)){
-        cerr << i << " inputs And gate false positive on input " << in << std::endl;
-      }
-    }
-    testCofactors(lut);
-    for(unsigned mask=1; mask < (1u<<i); ++mask){
-      if(!lut.evaluate(mask)){
-        cerr << i << " inputs Or gate ";
-        cerr << std::hex << "failed with input mask " << mask << std::endl;
-        abort();
-      }
-    }
-    if(lut.evaluate(0)){
-      cerr << i << " inputs Or gate ";
-      cerr << std::hex << "failed with no bit set" << std::endl;
-      abort();
-    }
-    if(!lut.isGeneralizedAnd()){
-      cerr << "Generalized And check failed for " << i << " input" << std::endl;
+    Lut reference = getGeneralizedAnd(i, 0, true);
+    if(reference != lut){
+      cerr << "Or check failed" << std::endl;
       abort();
     }
   }
   cout << "Or test OK" << std::endl;
 }
 
+void testNor(){
+  for(unsigned i=0; i<15u; ++i){
+    Lut lut = Lut::Nor(i);
+    Lut reference = getGeneralizedAnd(i, 0, false);
+    if(reference != lut){
+      cerr << "Nor check failed" << std::endl;
+      abort();
+    }
+  }
+  cout << "Nor test OK" << std::endl;
+}
+
+void testNand(){
+  for(unsigned i=0; i<15u; ++i){
+    Lut lut = Lut::Nand(i);
+    Lut reference = getGeneralizedAnd(i, -1, true);
+    if(reference != lut){
+      cerr << "Nand check failed" << std::endl;
+      abort();
+    }
+  }
+  cout << "Nand test OK" << std::endl;
+}
+
 void testXor(){
   for(unsigned i=0; i<15; ++i){
     Lut lut = Lut::Xor(i);
+    Lut reference = Lut::Exor(i);
+    assert(Lut::Not(reference) == lut);
     for(unsigned in=0; in<i; ++in){
       if(!lut.toggles(in)){
         cerr << i << " inputs Xor gate failed for input " << in << std::endl;
@@ -104,10 +128,12 @@ void testXor(){
 
 
 int main(){
-
   testAnd();
   testOr();
+  testNand();
+  testNor();
   testXor();
+  testGeneralizedAnds();
 
   return 0;
 }

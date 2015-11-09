@@ -91,6 +91,12 @@ Lut Lut::Exor(unsigned inputs){
   return ret;
 }
 
+Lut Lut::Not(Lut const & a){
+  Lut ret = a;
+  ret.invert();
+  return ret;
+}
+
 Lut Lut::And(Lut const & a, Lut const & b){
   assert(a.inputCount() == b.inputCount());
   Lut ret(a.inputCount());
