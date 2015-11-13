@@ -12,6 +12,7 @@
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
+#include <iomanip>
 
 using namespace std;
 
@@ -154,14 +155,14 @@ Lut Lut::Exor(Lut const & a, Lut const & b){
 Lut::Lut(string const & init){
   unsigned s = 2;
   while( (1lu << (s-2)) < init.size()) ++s;
-  if(init.size() != (1lu << s)) throw std::logic_error("Bad string size as init of the Lut");
+  if(init.size() != (1lu << (s-2))) throw std::logic_error("Bad string size as init of the Lut");
 
   _inputCnt = s;
   _lut.resize(mapSize(_inputCnt));
 
   for(size_t i=0; i<_lut.size(); ++i){
     uint64_t val = 0ul;
-    for(size_t j=i*8; j<i*8+8 && j<init.size(); ++j){
+    for(size_t j=i*16; j<i*16+16 && j<init.size(); ++j){
       uint64_t cur = 0ul;
       char c = init[j];
       if(c >= '0' && c <= '9'){
@@ -176,15 +177,25 @@ Lut::Lut(string const & init){
       else throw std::logic_error("Invalid character in init of the Lut");
       val = val << 4 | cur;
     }
-    _lut[i] = val;
+    _lut[_lut.size()-1-i] = val;
   }
 }
 
 string Lut::str() const{
+  if(inputCount() == 0) return string();
   stringstream ret;
   ret << std::hex;
-  for(size_t i=_lut.size(); i>0; --i){
-    ret << _lut[i-1];
+
+  int fillWidth;
+  if(inputCount() >= 6) fillWidth = 16;
+  else if(inputCount() <= 2) fillWidth = 1;
+  else fillWidth = (1 << (inputCount()-2));
+
+  uint64_t mask = inputCount() >= 6 ? lutSizeMask[6] : lutSizeMask[inputCount()];
+  
+  for(auto it=_lut.rbegin(); it!=_lut.rend(); ++it){
+    ret << setfill('0') << setw(fillWidth);
+    ret << (mask & *it);
   }
   return ret.str();
 }

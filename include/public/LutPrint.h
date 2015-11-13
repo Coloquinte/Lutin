@@ -5,7 +5,7 @@
 #include "Lut.h"
 #include <iosfwd>
 
-std::ostream operator<<(std::ostream& stream, Lut const & lut);
+std::ostream& operator<<(std::ostream& stream, Lut const & lut);
 
 #endif
 

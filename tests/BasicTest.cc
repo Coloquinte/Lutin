@@ -1,5 +1,6 @@
 
 #include "Lut.h"
+#include "LutPrint.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -20,6 +21,17 @@ void testCofactors(Lut const & lut){
   }
 }
 
+void testSaveReload(Lut const & lut){
+  if(lut.inputCount() >= 2){
+    string strRepr = lut.str();
+    Lut rebuilt(strRepr);
+    if(rebuilt != lut){
+      cerr << "Luts <" << lut << "> and <" << rebuilt << "> should be equal but are not" << endl;
+      abort();
+    }
+  }
+}
+
 Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
     Lut ret = Lut::Gnd(inputCnt);
     ret.setVal(inputValues & ((1u << inputCnt)-1), true);
@@ -29,6 +41,10 @@ Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 
 void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
   Lut lut = getGeneralizedAnd(inputCnt, inputValues, inverted);
+  if(lut.inputCount() != inputCnt){
+    cerr << "Input counts don't match" << std::endl;
+  }
+  testSaveReload(lut);
   for(unsigned in=0; in<inputCnt; ++in){
     bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
     if(!lut.forcesValue(in, forcingIn, forcedVal)){
@@ -48,7 +64,7 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 }
 
 void testGeneralizedAnds(){
-  for(unsigned inCnt=0; inCnt<15u; ++inCnt){
+  for(unsigned inCnt=1; inCnt<15u; ++inCnt){
     for(unsigned inMask=0; inMask < (1u<<inCnt); ++inMask){
       testGeneralizedAnd(inCnt, inMask, false);
       testGeneralizedAnd(inCnt, inMask, true);
@@ -110,7 +126,11 @@ void testXor(){
   for(unsigned i=0; i<15; ++i){
     Lut lut = Lut::Xor(i);
     Lut reference = Lut::Exor(i);
-    assert(Lut::Not(reference) == lut);
+    if(Lut::Not(reference) != lut){
+      cerr << "Nand check failed" << std::endl;
+      abort();
+    }
+    testSaveReload(lut);
     for(unsigned in=0; in<i; ++in){
       if(!lut.toggles(in)){
         cerr << i << " inputs Xor gate failed for input " << in << std::endl;
