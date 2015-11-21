@@ -22,8 +22,8 @@ const std::uint64_t lutInputMask[7] = {
 
 // Masks when the Lut has less than 6 inputs
 const std::uint64_t lutSizeMask[7] = {
-  0x00,
   0x01,
+  0x03,
   0x0f,
   0xff,
   0xffff,

@@ -20,6 +20,12 @@ namespace{
   size_t mapSize(unsigned inputCnt) {
     return inputCnt >= 6 ? 1ul << (inputCnt-6) : 1ul;
   }
+
+  void checkInputCounts(Lut const & a, Lut const & b){
+    if(a.inputCount() != b.inputCount()){
+      throw std::logic_error("Luts have different input counts");
+    }
+  }
 }
 
 // Quick and dirty for now
@@ -92,6 +98,39 @@ Lut Lut::Exor(unsigned inputs){
   return ret;
 }
 
+Lut Lut::Wire(unsigned wireInput, unsigned inputs, bool invert){
+  if(wireInput >= inputs){
+    throw std::logic_error("The specified wire input is not in the Lut's input range");
+  }
+
+  Lut ret(inputs);
+  if(wireInput < 6){
+    uint64_t szMask = inputs >= 6 ? lutSizeMask[6] : lutSizeMask[inputs];
+    uint64_t msk = invert ? ~lutInputMask[wireInput] : lutInputMask[wireInput];
+    for(uint64_t & cur : ret._lut){
+      cur = msk & szMask;
+    }
+  }
+  else{
+    size_t const stride = 1<<(wireInput-6);
+    for(size_t i= invert ? 0 : stride; i<ret._lut.size(); i += 2*stride){
+      for(size_t j=i; j<i+stride; ++j){
+        ret._lut[j] = allOne;
+      }
+    }
+  }
+
+  return ret;
+}
+
+Lut Lut::Buf(unsigned wireInput, unsigned inputs){
+  return Wire(wireInput, inputs, false);
+}
+
+Lut Lut::Inv(unsigned wireInput, unsigned inputs){
+  return Wire(wireInput, inputs, true );
+}
+
 Lut Lut::Not(Lut const & a){
   Lut ret = a;
   ret.invert();
@@ -99,54 +138,60 @@ Lut Lut::Not(Lut const & a){
 }
 
 Lut Lut::And(Lut const & a, Lut const & b){
-  assert(a.inputCount() == b.inputCount());
+  checkInputCounts(a, b);
   Lut ret(a.inputCount());
-  for(size_t i=0; i<a.inputCount(); ++i){
+  assert(ret._lut.size() == a._lut.size() && ret._lut.size() == b._lut.size());
+  for(size_t i=0; i<a._lut.size(); ++i){
     ret._lut[i] = a._lut[i] & b._lut[i];
   }
   return ret;
 }
 
 Lut Lut::Or(Lut const & a, Lut const & b){
-  assert(a.inputCount() == b.inputCount());
+  checkInputCounts(a, b);
   Lut ret(a.inputCount());
-  for(size_t i=0; i<a.inputCount(); ++i){
+  assert(ret._lut.size() == a._lut.size() && ret._lut.size() == b._lut.size());
+  for(size_t i=0; i<a._lut.size(); ++i){
     ret._lut[i] = a._lut[i] | b._lut[i];
   }
   return ret;
 }
 
 Lut Lut::Nor(Lut const & a, Lut const & b){
-  assert(a.inputCount() == b.inputCount());
+  checkInputCounts(a, b);
   Lut ret(a.inputCount());
-  for(size_t i=0; i<a.inputCount(); ++i){
+  assert(ret._lut.size() == a._lut.size() && ret._lut.size() == b._lut.size());
+  for(size_t i=0; i<a._lut.size(); ++i){
     ret._lut[i] = ~(a._lut[i] | b._lut[i]);
   }
   return ret;
 }
 
 Lut Lut::Nand(Lut const & a, Lut const & b){
-  assert(a.inputCount() == b.inputCount());
+  checkInputCounts(a, b);
   Lut ret(a.inputCount());
-  for(size_t i=0; i<a.inputCount(); ++i){
+  assert(ret._lut.size() == a._lut.size() && ret._lut.size() == b._lut.size());
+  for(size_t i=0; i<a._lut.size(); ++i){
     ret._lut[i] = ~(a._lut[i] & b._lut[i]);
   }
   return ret;
 }
 
 Lut Lut::Xor(Lut const & a, Lut const & b){
-  assert(a.inputCount() == b.inputCount());
+  checkInputCounts(a, b);
   Lut ret(a.inputCount());
-  for(size_t i=0; i<a.inputCount(); ++i){
+  assert(ret._lut.size() == a._lut.size() && ret._lut.size() == b._lut.size());
+  for(size_t i=0; i<a._lut.size(); ++i){
     ret._lut[i] = a._lut[i] ^ b._lut[i];
   }
   return ret;
 }
 
 Lut Lut::Exor(Lut const & a, Lut const & b){
-  assert(a.inputCount() == b.inputCount());
+  checkInputCounts(a, b);
   Lut ret(a.inputCount());
-  for(size_t i=0; i<a.inputCount(); ++i){
+  assert(ret._lut.size() == a._lut.size() && ret._lut.size() == b._lut.size());
+  for(size_t i=0; i<a._lut.size(); ++i){
     ret._lut[i] = ~(a._lut[i] ^ b._lut[i]);
   }
   return ret;

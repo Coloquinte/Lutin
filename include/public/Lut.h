@@ -24,6 +24,9 @@ class Lut{
     static Lut Nor  (unsigned inputs);
     static Lut Xor  (unsigned inputs);
     static Lut Exor (unsigned inputs);
+    static Lut Wire (unsigned wireInput, unsigned inputs, bool invert);
+    static Lut Buf  (unsigned wireInput, unsigned inputs);
+    static Lut Inv  (unsigned wireInput, unsigned inputs);
 
     // Considering same-size Luts with a common input set
     static Lut Not  (Lut const & a);

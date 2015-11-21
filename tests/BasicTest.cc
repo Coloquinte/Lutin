@@ -8,10 +8,6 @@
 
 using namespace std;
 
-inline void testVal(bool value){
-  if(!value) abort();
-}
-
 void testCofactors(Lut const & lut){
   for(unsigned in=0; in<lut.inputCount(); ++in){
     if(!lut.getCofactor(in, true).isDC(in) || !lut.getCofactor(in, false).isDC(in)){
@@ -32,6 +28,18 @@ void testSaveReload(Lut const & lut){
   }
 }
 
+void testInvertInput(Lut const & lut){
+  Lut dup = lut;
+  for(unsigned i=0; i<lut.inputCount()-1; ++i){
+    dup.invertInput(i);
+    dup.invertInput(i);
+    if(dup != lut){
+      cerr << "Input inversion error: <" << dup << "> vs <" << lut << ">" << endl;
+      abort();
+    }
+  }
+}
+
 Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
     Lut ret = Lut::Gnd(inputCnt);
     ret.setVal(inputValues & ((1u << inputCnt)-1), true);
@@ -45,6 +53,7 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
     cerr << "Input counts don't match" << std::endl;
   }
   testSaveReload(lut);
+  testInvertInput(lut);
   for(unsigned in=0; in<inputCnt; ++in){
     bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
     if(!lut.forcesValue(in, forcingIn, forcedVal)){
@@ -78,7 +87,7 @@ void testAnd(){
     Lut lut = Lut::And(i);
     Lut reference = getGeneralizedAnd(i, -1, false);
     if(reference != lut){
-      cerr << "Or check failed" << std::endl;
+      cerr << "And check failed for " << lut << std::endl;
       abort();
     }
   }
@@ -91,7 +100,7 @@ void testOr(){
     Lut lut = Lut::Or(i);
     Lut reference = getGeneralizedAnd(i, 0, true);
     if(reference != lut){
-      cerr << "Or check failed" << std::endl;
+      cerr << "Or check failed for " << lut << std::endl;
       abort();
     }
   }
@@ -103,7 +112,7 @@ void testNor(){
     Lut lut = Lut::Nor(i);
     Lut reference = getGeneralizedAnd(i, 0, false);
     if(reference != lut){
-      cerr << "Nor check failed" << std::endl;
+      cerr << "Nor check failed for " << lut << std::endl;
       abort();
     }
   }
@@ -115,7 +124,7 @@ void testNand(){
     Lut lut = Lut::Nand(i);
     Lut reference = getGeneralizedAnd(i, -1, true);
     if(reference != lut){
-      cerr << "Nand check failed" << std::endl;
+      cerr << "Nand check failed for " << lut << std::endl;
       abort();
     }
   }
@@ -127,7 +136,7 @@ void testXor(){
     Lut lut = Lut::Xor(i);
     Lut reference = Lut::Exor(i);
     if(Lut::Not(reference) != lut){
-      cerr << "Nand check failed" << std::endl;
+      cerr << "Xor check failed for " << lut << std::endl;
       abort();
     }
     testSaveReload(lut);
@@ -139,15 +148,49 @@ void testXor(){
     }
     testCofactors(lut);
     if(!lut.isGeneralizedXor()){
-      cerr << "Generalized And check failed for " << i << " input" << std::endl;
+      cerr << "Generalized And check failed" << std::endl;
       abort();
     }
   }
   cout << "Xor test OK" << std::endl;
 }
 
+void testBufCofactors(Lut const & wire, unsigned j){
+  for(unsigned k=0; k<wire.inputCount(); ++k){
+    if(k != j){
+      if(wire.getCofactor(k, false) != wire.getCofactor(k, true)){
+        cerr << "Buffer cofactor test failed" << endl;
+        abort();
+      }
+      if(!wire.isDC(k)){
+        cerr << "Buffer DC check failed" << endl;
+        abort();
+      }
+    }
+  }
+  if(wire.isDC(j)){
+    cerr << "Buffer sensitivity check failed" << endl;
+    abort();
+  }
+}
+
+void testBuf(){
+  for(unsigned i=1; i<15; ++i){
+    for(unsigned j=0; j<i; ++j){
+      Lut buf = Lut::Buf(j, i);
+      Lut inv = Lut::Inv(j, i);
+      if(buf != Lut::Not(inv)){
+        cerr << "Buffer test failed" << endl;
+        abort();
+      }
+      testBufCofactors(buf, j);
+      testBufCofactors(inv, j);
+    }
+  }
+}
 
 int main(){
+  testBuf();
   testAnd();
   testOr();
   testNand();
