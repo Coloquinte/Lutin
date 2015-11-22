@@ -28,6 +28,22 @@ void testSaveReload(Lut const & lut){
   }
 }
 
+void testSwapInputs(Lut const & lut){
+  Lut dup = lut;
+  if(lut.inputCount() <= 1) return;
+
+  for(unsigned i=0; i<lut.inputCount()-1; ++i){
+    for(unsigned j=i+1; j<lut.inputCount(); ++j){
+      dup.swapInputs(i,j);
+      dup.swapInputs(i,j);
+      if(dup != lut){
+        cerr << "Input swapping error: <" << dup << "> vs <" << lut << ">" << endl;
+        abort();
+      }
+    }
+  }
+}
+
 void testInvertInput(Lut const & lut){
   Lut dup = lut;
   for(unsigned i=0; i<lut.inputCount()-1; ++i){
@@ -54,6 +70,7 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
   }
   testSaveReload(lut);
   testInvertInput(lut);
+  if(inputCnt <= 10) testSwapInputs(lut);
   for(unsigned in=0; in<inputCnt; ++in){
     bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
     if(!lut.forcesValue(in, forcingIn, forcedVal)){

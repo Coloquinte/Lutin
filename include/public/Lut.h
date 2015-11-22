@@ -74,16 +74,19 @@ class Lut{
      *   * Does the input toggle the output value?
      *   * Does a particular value at one input force the output value?
      *   * Get the cofactors, but keep the inputs in position (make the corresponding input DC)
+     *   * Test if the Lut can be simplified in smaller disjoint Luts
      */
     bool isDC(unsigned input) const;
     bool toggles(unsigned input) const;
     bool forcesValue(unsigned input, bool inVal, bool outVal) const;
 
     Lut getCofactor (unsigned input, bool value) const;
+    bool hasFactors() const;
 
     private:
     // Helper functions
     bool equal(Lut const & b) const;
+    void swapToEnd(unsigned input);
 
     private:
     unsigned _inputCnt;

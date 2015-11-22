@@ -3,6 +3,7 @@
 #include "LutUtils.h"
 
 #include <cassert>
+#include <stdexcept>
 
 using namespace std;
 
@@ -85,6 +86,25 @@ void Lut::invertInput(unsigned input){
   }
 }
 
+void Lut::swapInputs(unsigned i1, unsigned i2){
+  if(i1 == i2) return;
+  if(i1 >= inputCount() && i2 >= inputCount()) throw std::logic_error("Inputs to swap must be valid inputs");
+
+  Lut ret(inputCount());
+  for(unsigned inMask=0; inMask < 1u<<inputCount(); ++inMask){
+    unsigned bit1Sel = 1u << i1;
+    unsigned bit2Sel = 1u << i2;
+    unsigned swappedMask = inMask & ~bit1Sel & ~bit2Sel;
+    if((bit1Sel & inMask) != 0u) swappedMask |= bit2Sel;
+    if((bit2Sel & inMask) != 0u) swappedMask |= bit1Sel;
+    ret.setVal(swappedMask, evaluate(inMask));
+  }
+  std::swap(ret._lut, _lut);
+}
+
+void Lut::swapToEnd(unsigned input){
+  swapInputs(inputCount()-1, input);
+}
 
 Lut Lut::getCofactor(unsigned input, bool value) const{
   assert(input < inputCount());
