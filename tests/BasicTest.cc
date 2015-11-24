@@ -87,6 +87,13 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
     cerr << "Generalized And check failed for " << inputCnt << " input" << std::endl;
     abort();
   }
+  Lut pseudoRepr = lut.getPseudoRepresentant();
+  if(lut.isPseudoRepresentant() && lut != pseudoRepr){
+    cerr << "Failed pseudo-representant stability check" << endl;
+  }
+  if(pseudoRepr != getGeneralizedAnd(inputCnt, 0u, true)){
+    cerr << "Unexpected pseudo-representant of generalized and" << endl;
+  }
 }
 
 void testGeneralizedAnds(){

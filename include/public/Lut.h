@@ -13,8 +13,6 @@ class Lut{
     public:
     // Contructors (default is the ground lut)
     Lut(unsigned inputs);
-    // Create a Lut from an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
-    Lut(std::string const & init);
 
     static Lut Gnd  (unsigned inputs);
     static Lut Vcc  (unsigned inputs);
@@ -28,7 +26,7 @@ class Lut{
     static Lut Buf  (unsigned wireInput, unsigned inputs);
     static Lut Inv  (unsigned wireInput, unsigned inputs);
 
-    // Considering same-size Luts with a common input set
+    // Operations on same-size Luts with a common input set
     static Lut Not  (Lut const & a);
     static Lut And  (Lut const & a, Lut const & b);
     static Lut Or   (Lut const & a, Lut const & b);
@@ -37,7 +35,6 @@ class Lut{
     static Lut Xor  (Lut const & a, Lut const & b);
     static Lut Exor (Lut const & a, Lut const & b);
 
-    public:
     // Basic modifiers: invert one input or the output
     void invertInput(unsigned input);
     void invert();
@@ -62,31 +59,39 @@ class Lut{
     bool isGeneralizedAnd() const;
     bool isGeneralizedXor() const;
 
+    // Logic comparison
     bool operator==(Lut const & b){ return  equal(b); }
     bool operator!=(Lut const & b){ return !equal(b); }
 
+    // To/from string represented as an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
     std::string str() const;
+    Lut(std::string const & init);
 
-    public:
     /*
      * Logic queries
      *   * Is an input a don't care (no influence on the output result)?
      *   * Does the input toggle the output value?
      *   * Does a particular value at one input force the output value?
-     *   * Get the cofactors, but keep the inputs in position (make the corresponding input DC)
      *   * Test if the Lut can be simplified in smaller disjoint Luts
      */
+
     bool isDC(unsigned input) const;
     bool toggles(unsigned input) const;
     bool forcesValue(unsigned input, bool inVal, bool outVal) const;
-
-    Lut getCofactor (unsigned input, bool value) const;
     bool hasFactors() const;
+
+    // Get the cofactors, but keep the inputs in position (make the corresponding input DC)
+    Lut getCofactor (unsigned input, bool value) const;
+
+    // Get a pseudo representant with some input/output inversions and input permutations; it is not unique but is a good approximation for a unique representant
+    bool isPseudoRepresentant() const;
+    Lut getPseudoRepresentant() const;
 
     private:
     // Helper functions
-    bool equal(Lut const & b) const;
-    void swapToEnd(unsigned input);
+    bool equal(Lut const & b) const; // Defines equality operators
+    void swapToEnd(unsigned input); // Used in optimized swapInputs implementations
+    unsigned countSetBits() const; // Used to compute a pseudorepresentant
 
     private:
     unsigned _inputCnt;

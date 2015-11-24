@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <bitset>
 
 using namespace std;
 
@@ -198,3 +199,61 @@ bool Lut::forcesValue(unsigned input, bool inVal, bool outVal) const{
   }
 }
 
+bool Lut::isPseudoRepresentant() const{
+  // A pseudo-representant has half the bits or more set
+  if(countSetBits() < (1u << (inputCount()-1))){
+    return false;
+  }
+
+  // For each input, the 1 cofactor has at least as many bit sets than the 0 cofactor
+  for(unsigned input=0; input<inputCount(); ++input){
+    if(getCofactor(input, false).countSetBits() > getCofactor(input, true).countSetBits()){
+      return false;
+    }
+  }
+
+  // The inputs are sorted in increasing order of set bits in the 1 cofactor
+  for(unsigned input=0; input+1<inputCount(); ++input){
+    if(getCofactor(input, true).countSetBits() > getCofactor(input+1, true).countSetBits()){
+      return false;
+    }
+  }
+
+  return true;
+}
+
+Lut Lut::getPseudoRepresentant() const{
+  Lut ret = *this;
+  // Invert the output if necessary to obtain majority of bit sets
+  if(ret.countSetBits() < (1u << (inputCount()-1))){
+    ret.invert();
+  }
+
+  // Invert the inputs to obtain majority of bit sets on each input
+  for(unsigned input=0; input<inputCount(); ++input){
+    if(ret.getCofactor(input, false).countSetBits() > ret.getCofactor(input, true).countSetBits()){
+      ret.invertInput(input);
+    }
+  }
+
+  // Quadratic sort of the inputs in increasing order of set bits
+  for(unsigned end=inputCount(); end>=2; --end){
+    for(unsigned in=0; in+1<end; ++in){
+      if(ret.getCofactor(in, true).countSetBits() > ret.getCofactor(in+1, true).countSetBits()){
+        ret.swapInputs(in, in+1);
+      }
+    }
+  }
+  assert(ret.isPseudoRepresentant());
+  return ret;
+}
+
+unsigned Lut::countSetBits() const{
+  unsigned ret = 0;
+  uint64_t szMask = inputCount() >= 6 ? lutSizeMask[6] : lutSizeMask[inputCount()];
+  for(uint64_t cur : _lut){
+    bitset<64> bs(cur & szMask);
+    ret += bs.count();
+  }
+  return ret;
+}
