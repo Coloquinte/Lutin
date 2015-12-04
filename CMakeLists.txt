@@ -10,8 +10,9 @@ include_directories(${LUT_SOURCE_DIR}/include/public)
 include_directories(${LUT_SOURCE_DIR}/include/private)
 
 set(CPPS
-  src/LutConstruction.cc
-  src/LutManipulation.cc
+  src/Lut.cc
+  src/LutRefConstruction.cc
+  src/LutRefManipulation.cc
   src/LutPrint.cc
 )
 

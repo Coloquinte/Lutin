@@ -211,6 +211,7 @@ void testBuf(){
       testBufCofactors(inv, j);
     }
   }
+  cout << "Buf test OK" << std::endl;
 }
 
 int main(){
