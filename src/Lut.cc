@@ -1,10 +1,17 @@
 
 #include "Lut.h"
 
+#include <cassert>
+
 using namespace std;
 
 Lut::Lut(unsigned inputCount) 
 : LutRef(inputCount, new uint64_t[arraySize(inputCount)]) {
+}
+
+Lut::Lut(unsigned inputCount, unsigned long mask) : Lut(inputCount) {
+  assert(inputCount <= 6);
+  _lut[0] = mask;
 }
 
 Lut::Lut(Lut const & o) : Lut(o.inputCount()){
@@ -34,8 +41,13 @@ Lut::~Lut(){
 }
 
 void Lut::setInputCount(unsigned inputCnt){
+  LutMask* tmp = new LutMask[arraySize(inputCnt)];
+  for(unsigned i=0; i<arraySize(min(inputCnt, inputCount())); ++i){
+    tmp[i] = _lut[i];
+  }
   delete[] _lut;
-  _lut = new LutMask[arraySize(inputCnt)];
+  _lut = tmp;
+  _inputCnt = inputCnt;
 }
 
 namespace{

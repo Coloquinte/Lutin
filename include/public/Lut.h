@@ -36,6 +36,7 @@ class Lut : public LutRef {
 
     // Contructors (default is the ground lut)
     Lut(unsigned inputCnt = 0);
+    Lut(unsigned inputCnt, unsigned long mask);
     Lut(std::string const & init);
 
     // Since the memory is managed internally, we need a copy constructor
@@ -47,6 +48,19 @@ class Lut : public LutRef {
 
     ~Lut();
 };
+
+inline Lut operator|(LutRef const a, LutRef const b) {
+  return Lut::Or(a, b);
+}
+inline Lut operator&(LutRef const a, LutRef const b) {
+  return Lut::And(a, b);
+}
+inline Lut operator^(LutRef const a, LutRef const b) {
+  return Lut::Xor(a, b);
+}
+inline Lut operator~(LutRef const a) {
+  return Lut::Not(a);
+}
 
 #endif
 
