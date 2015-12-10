@@ -14,6 +14,7 @@ class LutRef{
     LutRef(unsigned inputs = -1, LutMask* pt = nullptr);
 
     // No copy, but assignment possible
+    LutRef(LutRef const & o) = delete;
     LutRef& operator=(LutRef const & o);
 
     public:
@@ -30,24 +31,24 @@ class LutRef{
     void setInv  (unsigned wireInput);
 
     // Operations on same-size Luts with a common input set
-    void setNot  (LutRef const a);
-    void setAnd  (LutRef const a, LutRef const b);
-    void setOr   (LutRef const a, LutRef const b);
-    void setNand (LutRef const a, LutRef const b);
-    void setNor  (LutRef const a, LutRef const b);
-    void setXor  (LutRef const a, LutRef const b);
-    void setExor (LutRef const a, LutRef const b);
+    void setNot  (LutRef const & a);
+    void setAnd  (LutRef const & a, LutRef const & b);
+    void setOr   (LutRef const & a, LutRef const & b);
+    void setNand (LutRef const & a, LutRef const & b);
+    void setNor  (LutRef const & a, LutRef const & b);
+    void setXor  (LutRef const & a, LutRef const & b);
+    void setExor (LutRef const & a, LutRef const & b);
 
-    void operator&=(LutRef const o);
-    void operator|=(LutRef const o);
-    void operator^=(LutRef const o);
+    void operator&=(LutRef const & o);
+    void operator|=(LutRef const & o);
+    void operator^=(LutRef const & o);
 
     // Basic modifiers: invert one input or the output
     void invertInput(unsigned input);
     void invert();
     void setVal(unsigned inputValues, bool val);
     void swapInputs(unsigned i1, unsigned i2);
-    void setSwappedInputs(LutRef const o, unsigned i1, unsigned i2);
+    void setSwappedInputs(LutRef const & o, unsigned i1, unsigned i2);
 
     // Basic queries
     unsigned inputCount() const { return _inputCnt; }
@@ -68,8 +69,8 @@ class LutRef{
     bool isGeneralizedXor() const;
 
     // Logic comparison
-    bool operator==(LutRef const b) const { return  equal(b); }
-    bool operator!=(LutRef const b) const { return !equal(b); }
+    bool operator==(LutRef const & b) const { return  equal(b); }
+    bool operator!=(LutRef const & b) const { return !equal(b); }
 
     struct Hash;
     std::size_t getHash() const;
@@ -91,17 +92,17 @@ class LutRef{
     bool forcesValue(unsigned input, bool inVal, bool outVal) const;
 
     // Get the cofactors, but keep the inputs in position (make the corresponding input DC)
-    void setToCofactor(LutRef const o, unsigned input, bool value);
+    void setToCofactor(LutRef const & o, unsigned input, bool value);
     void setToCofactor(unsigned input, bool value);
 
     // Get a pseudo representant with some input/output inversions and input permutations; it is not unique but is a good approximation for a unique representant
     bool isPseudoRepresentant() const;
     void setToPseudoRepresentant();
-    void setToPseudoRepresentant(LutRef const o);
+    void setToPseudoRepresentant(LutRef const & o);
 
     private:
     // Helper functions
-    bool equal(LutRef const o) const; // Defines equality operators
+    bool equal(LutRef const & o) const; // Defines equality operators
     void swapToEnd(unsigned input); // Used in optimized swapInputs implementations
     unsigned countSetBits() const; // Used to compute a pseudorepresentant
 

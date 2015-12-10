@@ -17,7 +17,7 @@
 using namespace std;
 
 namespace{
-  void checkInputCounts(LutRef const a, LutRef const b){
+  void checkInputCounts(LutRef const & a, LutRef const & b){
     if(a.inputCount() != b.inputCount()){
       throw std::logic_error("Luts have different input counts");
     }
@@ -126,14 +126,14 @@ LutRef& LutRef::operator=(LutRef const & a){
   return *this;
 }
 
-void LutRef::setNot(LutRef const a){
+void LutRef::setNot(LutRef const & a){
   checkInputCounts(*this, a);
   for(unsigned i=0; i<arraySize(); ++i){
     _lut[i] = ~a._lut[i];
   }
 }
 
-void LutRef::setAnd(LutRef const a, LutRef const b){
+void LutRef::setAnd(LutRef const & a, LutRef const & b){
   checkInputCounts(*this, a);
   checkInputCounts(a, b);
   for(unsigned i=0; i<arraySize(); ++i){
@@ -141,7 +141,7 @@ void LutRef::setAnd(LutRef const a, LutRef const b){
   }
 }
 
-void LutRef::setOr(LutRef const a, LutRef const b){
+void LutRef::setOr(LutRef const & a, LutRef const & b){
   checkInputCounts(*this, a);
   checkInputCounts(a, b);
   for(unsigned i=0; i<arraySize(); ++i){
@@ -149,7 +149,7 @@ void LutRef::setOr(LutRef const a, LutRef const b){
   }
 }
 
-void LutRef::setNor(LutRef const a, LutRef const b){
+void LutRef::setNor(LutRef const & a, LutRef const & b){
   checkInputCounts(*this, a);
   checkInputCounts(a, b);
   for(unsigned i=0; i<arraySize(); ++i){
@@ -157,7 +157,7 @@ void LutRef::setNor(LutRef const a, LutRef const b){
   }
 }
 
-void LutRef::setNand(LutRef const a, LutRef const b){
+void LutRef::setNand(LutRef const & a, LutRef const & b){
   checkInputCounts(*this, a);
   checkInputCounts(a, b);
   for(unsigned i=0; i<arraySize(); ++i){
@@ -165,7 +165,7 @@ void LutRef::setNand(LutRef const a, LutRef const b){
   }
 }
 
-void LutRef::setXor(LutRef const a, LutRef const b){
+void LutRef::setXor(LutRef const & a, LutRef const & b){
   checkInputCounts(*this, a);
   checkInputCounts(a, b);
   for(unsigned i=0; i<arraySize(); ++i){
@@ -173,7 +173,7 @@ void LutRef::setXor(LutRef const a, LutRef const b){
   }
 }
 
-void LutRef::setExor(LutRef const a, LutRef const b){
+void LutRef::setExor(LutRef const & a, LutRef const & b){
   checkInputCounts(*this, a);
   checkInputCounts(a, b);
   for(unsigned i=0; i<arraySize(); ++i){
@@ -181,21 +181,21 @@ void LutRef::setExor(LutRef const a, LutRef const b){
   }
 }
 
-void LutRef::operator&=(LutRef const o){
+void LutRef::operator&=(LutRef const & o){
   checkInputCounts(*this, o);
   for(unsigned i=0; i<arraySize(); ++i){
     _lut[i] &= o._lut[i];
   }
 }
 
-void LutRef::operator|=(LutRef const o){
+void LutRef::operator|=(LutRef const & o){
   checkInputCounts(*this, o);
   for(unsigned i=0; i<arraySize(); ++i){
     _lut[i] |= o._lut[i];
   }
 }
 
-void LutRef::operator^=(LutRef const o){
+void LutRef::operator^=(LutRef const & o){
   checkInputCounts(*this, o);
   for(unsigned i=0; i<arraySize(); ++i){
     _lut[i] ^= o._lut[i];

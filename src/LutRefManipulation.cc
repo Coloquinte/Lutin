@@ -17,7 +17,7 @@ namespace{
   }
 }
 
-bool LutRef::equal(LutRef const b) const{
+bool LutRef::equal(LutRef const & b) const{
   if(inputCount() != b.inputCount()) return false;
   if(inputCount() <= 6){ // Safe while I don't force the unused bits to 0
     return ((_lut[0] ^ b._lut[0]) & lutSizeMask[inputCount()]) == 0;
@@ -125,7 +125,7 @@ void LutRef::swapToEnd(unsigned input){
   swapInputs(inputCount()-1, input);
 }
 
-void LutRef::setToCofactor(LutRef const o, unsigned input, bool value){
+void LutRef::setToCofactor(LutRef const & o, unsigned input, bool value){
   operator=(o);
   setToCofactor(input, value);
 }
@@ -251,7 +251,7 @@ bool LutRef::isPseudoRepresentant() const{
   return true;
 }
 
-void LutRef::setToPseudoRepresentant(LutRef const o){
+void LutRef::setToPseudoRepresentant(LutRef const & o){
   operator=(o);
   setToPseudoRepresentant();
 }
