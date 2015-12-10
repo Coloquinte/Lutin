@@ -118,7 +118,7 @@ void LutRef::setInv(unsigned wireInput){
   setWire(wireInput, true );
 }
 
-LutRef& LutRef::operator=(LutRef const a){
+LutRef& LutRef::operator=(LutRef const & a){
   checkInputCounts(*this, a);
   for(unsigned i=0; i<arraySize(); ++i){
     _lut[i] = a._lut[i];

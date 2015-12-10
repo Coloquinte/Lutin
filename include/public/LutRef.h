@@ -14,7 +14,7 @@ class LutRef{
     LutRef(unsigned inputs = -1, LutMask* pt = nullptr);
 
     // No copy, but assignment possible
-    LutRef& operator=(LutRef const o);
+    LutRef& operator=(LutRef const & o);
 
     public:
     void setGnd  ();
@@ -68,8 +68,11 @@ class LutRef{
     bool isGeneralizedXor() const;
 
     // Logic comparison
-    bool operator==(LutRef const b){ return  equal(b); }
-    bool operator!=(LutRef const b){ return !equal(b); }
+    bool operator==(LutRef const b) const { return  equal(b); }
+    bool operator!=(LutRef const b) const { return !equal(b); }
+
+    struct Hash;
+    std::size_t getHash() const;
 
     // To/from string represented as an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
     std::string str() const;
@@ -114,6 +117,12 @@ class LutRef{
     // Need to new/delete if managed, or increment if iterator
     unsigned _inputCnt;
     LutMask* _lut;
+};
+
+struct LutRef::Hash{
+  std::size_t operator()(LutRef const & lut) const{
+    return lut.getHash();
+  }
 };
 
 #endif

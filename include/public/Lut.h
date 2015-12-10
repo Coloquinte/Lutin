@@ -43,7 +43,7 @@ class Lut : public LutRef {
     Lut(Lut const & o);
     Lut(Lut&& o);
     // Allow resizing, contrary to LutRef
-    Lut& operator=(LutRef const o);
+    Lut& operator=(LutRef const & o);
     Lut& operator=(Lut&& o);
 
     ~Lut();

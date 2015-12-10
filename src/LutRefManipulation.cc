@@ -9,6 +9,14 @@
 
 using namespace std;
 
+namespace{
+  void checkInputMask(LutRef const & lut, unsigned inputValues) {
+    if(inputValues >= (1u<<lut.inputCount())){
+      throw std::logic_error("Out of range bits are set in the given input mask");
+    }
+  }
+}
+
 bool LutRef::equal(LutRef const b) const{
   if(inputCount() != b.inputCount()) return false;
   if(inputCount() <= 6){ // Safe while I don't force the unused bits to 0
@@ -23,6 +31,8 @@ bool LutRef::equal(LutRef const b) const{
 }
 
 bool LutRef::evaluate(unsigned inputValues) const{
+  checkInputMask(*this, inputValues);
+
   unsigned lutChunk = inputValues >> 6;
   assert(lutChunk < arraySize());
   unsigned chunkInd = inputValues & 0x003f;
@@ -36,6 +46,8 @@ void LutRef::invert(){
 }
 
 void LutRef::setVal(unsigned inputValues, bool val){
+  checkInputMask(*this, inputValues);
+
   unsigned lutChunk = inputValues >> 6;
   assert(lutChunk < arraySize());
   unsigned chunkInd = inputValues & 0x003f;
@@ -274,7 +286,6 @@ void LutRef::setToPseudoRepresentant(){
   assert(isPseudoRepresentant());
 }
 
-
 unsigned LutRef::countSetBits() const{
   size_t ret = 0;
   LutMask szMask = inputCount() >= 6 ? lutSizeMask[6] : lutSizeMask[inputCount()];
@@ -284,3 +295,12 @@ unsigned LutRef::countSetBits() const{
   }
   return ret;
 }
+
+std::size_t LutRef::getHash() const {
+  std::size_t ret = 0;
+  for(unsigned i=0; i<arraySize(); ++i){
+    ret ^= _lut[i];
+  }
+  return ret;
+}
+

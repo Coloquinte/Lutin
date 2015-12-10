@@ -6,7 +6,7 @@
 using namespace std;
 
 Lut::Lut(unsigned inputCount) 
-: LutRef(inputCount, new uint64_t[arraySize(inputCount)]) {
+: LutRef(inputCount, new LutMask[arraySize(inputCount)]) {
 }
 
 Lut::Lut(unsigned inputCount, unsigned long mask) : Lut(inputCount) {
@@ -23,7 +23,7 @@ Lut::Lut(Lut const & o) : Lut(o.inputCount()){
 Lut::Lut(Lut&& o) : LutRef(o._inputCnt, o._lut){
 }
 
-Lut& Lut::operator=(LutRef const o){
+Lut& Lut::operator=(LutRef const & o){
   setInputCount(o.inputCount());
   LutRef::operator=(o);
   return *this;
