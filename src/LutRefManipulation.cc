@@ -234,6 +234,20 @@ bool LutRef::hasDC() const {
   return false;
 }
 
+bool LutRef::isUnate(unsigned input) const {
+  return isUnate(input, false) || isUnate(input, true);
+}
+bool LutRef::isUnate(unsigned input, bool polarity) const {
+  Lut negCofactor = Lut::Cofactor(*this, input, false);
+  Lut posCofactor = Lut::Cofactor(*this, input, true );
+  if(polarity){
+    return (~negCofactor | posCofactor).isVcc();
+  }
+  else{
+    return (negCofactor | ~posCofactor).isVcc();
+  }
+}
+
 bool LutRef::hasSingleInputFactorization() const {
   for(unsigned i=0; i<inputCount(); ++i){
     if(toggles(i)) return true;

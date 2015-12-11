@@ -97,6 +97,8 @@ class LutRef{
     bool isDC(unsigned input) const;
     bool toggles(unsigned input) const;
     bool forcesValue(unsigned input, bool inVal, bool outVal) const;
+    bool isUnate(unsigned input) const;
+    bool isUnate(unsigned input, bool polarity) const;
 
     bool hasDC() const;
     bool hasSingleInputFactorization() const;

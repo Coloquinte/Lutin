@@ -29,6 +29,9 @@ class Lut : public LutRef {
     static Lut Xor  (LutRef const & a, LutRef const & b);
     static Lut Exor (LutRef const & a, LutRef const & b);
 
+    static Lut Cofactor (LutRef const & a, unsigned input, bool value);
+    static Lut PseudoRepresentant (LutRef const & a);
+
     void setInputCount(unsigned inputCnt);
 
     Lut getCofactor (unsigned input, bool value) const;

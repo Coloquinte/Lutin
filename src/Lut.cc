@@ -81,15 +81,23 @@ Lut Lut::Nor  (LutRef const & a, LutRef const & b) { Lut ret(a.inputCount()); re
 Lut Lut::Xor  (LutRef const & a, LutRef const & b) { Lut ret(a.inputCount()); ret.setXor  (a, b); return ret; }
 Lut Lut::Exor (LutRef const & a, LutRef const & b) { Lut ret(a.inputCount()); ret.setExor (a, b); return ret; }
 
-Lut Lut::getCofactor(unsigned input, bool value) const{
-  Lut ret(inputCount());
-  ret.setToCofactor(*this, input, value);
+Lut Lut::Cofactor(LutRef const & a, unsigned input, bool value) {
+  Lut ret(a.inputCount());
+  ret.setToCofactor(a, input, value);
   return ret;
 }
 
-Lut Lut::getPseudoRepresentant() const{
-  Lut ret(inputCount());
-  ret.setToPseudoRepresentant(*this);
+Lut Lut::getCofactor(unsigned input, bool value) const {
+  return Cofactor(*this, input, value);
+}
+
+Lut Lut::PseudoRepresentant(LutRef const & a) {
+  Lut ret(a.inputCount());
+  ret.setToPseudoRepresentant(a);
   return ret;
+}
+
+Lut Lut::getPseudoRepresentant() const {
+  return PseudoRepresentant(*this);
 }
 
