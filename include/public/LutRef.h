@@ -75,6 +75,13 @@ class LutRef{
     struct Hash;
     std::size_t getHash() const;
 
+    // Size of internal structures
+
+    static unsigned long arraySize(unsigned inputCnt);
+    static unsigned long bitCount(unsigned inputCnt);
+    unsigned long arraySize() const;
+    unsigned long bitCount() const;
+
     // To/from string represented as an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
     std::string str() const;
     void initFromStr(std::string const & init);
@@ -90,6 +97,9 @@ class LutRef{
     bool isDC(unsigned input) const;
     bool toggles(unsigned input) const;
     bool forcesValue(unsigned input, bool inVal, bool outVal) const;
+
+    bool hasDC() const;
+    bool hasSingleInputFactorization() const;
 
     // Get the cofactors, but keep the inputs in position (make the corresponding input DC)
     void setToCofactor(LutRef const & o, unsigned input, bool value);
@@ -107,14 +117,6 @@ class LutRef{
     unsigned countSetBits() const; // Used to compute a pseudorepresentant
 
     protected:
-    static unsigned arraySize(unsigned inputCount) {
-      return inputCount >= 6 ? 1ul << (inputCount-6) : 1ul;
-    }
-    unsigned arraySize() const{
-      return arraySize(inputCount());
-    }
-
-    protected:
     // Need to new/delete if managed, or increment if iterator
     unsigned _inputCnt;
     LutMask* _lut;
@@ -125,6 +127,19 @@ struct LutRef::Hash{
     return lut.getHash();
   }
 };
+
+inline unsigned long LutRef::arraySize(unsigned inputCnt) {
+  return inputCnt >= 6 ? 1ul << (inputCnt-6) : 1ul;
+}
+inline unsigned long LutRef::arraySize() const{
+  return arraySize(inputCount());
+}
+inline unsigned long LutRef::bitCount(unsigned inputCnt) {
+  return 1ul << inputCnt;
+}
+inline unsigned long LutRef::bitCount() const{
+  return bitCount(inputCount());
+}
 
 #endif
 

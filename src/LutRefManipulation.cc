@@ -15,6 +15,9 @@ namespace{
       throw std::logic_error("Out of range bits are set in the given input mask");
     }
   }
+  LutRef::LutMask getSizeMask(unsigned inputCount){
+    return inputCount >= 6 ? lutSizeMask[6] : lutSizeMask[inputCount];
+  }
 }
 
 bool LutRef::equal(LutRef const & b) const{
@@ -185,7 +188,8 @@ bool LutRef::toggles(unsigned input) const{
     for(unsigned i=0; i<arraySize(); ++i){
       acc &= (_lut[i] << (1<<input)) ^ _lut[i];
     }
-    return (acc | ~lutInputMask[input]) == allOne;
+    LutMask excludeMask = ~lutInputMask[input] | ~getSizeMask(inputCount());
+    return (acc | excludeMask) == allOne;
   }
   else{
     LutMask acc = allOne;
@@ -204,11 +208,12 @@ bool LutRef::forcesValue(unsigned input, bool inVal, bool outVal) const{
   LutMask comp = outVal? allOne : allZero;
   if(input<6){
     LutMask inputMask = inVal? lutInputMask[input] : ~lutInputMask[input];
+    LutMask excludeMask = inputMask & getSizeMask(inputCount());
     LutMask acc = allZero;
     for(unsigned i=0; i<arraySize(); ++i){
       acc |= (_lut[i] ^ comp);
     }
-    return (acc & inputMask) == allZero;
+    return (acc & excludeMask) == allZero;
   }
   else{
     LutMask acc = allZero;
@@ -220,6 +225,24 @@ bool LutRef::forcesValue(unsigned input, bool inVal, bool outVal) const{
     }
     return acc == allZero;
   }
+}
+
+bool LutRef::hasDC() const {
+  for(unsigned i=0; i<inputCount(); ++i){
+    if(isDC(i)) return true;
+  }
+  return false;
+}
+
+bool LutRef::hasSingleInputFactorization() const {
+  for(unsigned i=0; i<inputCount(); ++i){
+    if(toggles(i)) return true;
+    if(forcesValue(i, false, false)) return true;
+    if(forcesValue(i, false, true )) return true;
+    if(forcesValue(i, true , false)) return true;
+    if(forcesValue(i, true , true )) return true;
+  }
+  return false;
 }
 
 bool LutRef::isPseudoRepresentant() const{
@@ -288,7 +311,7 @@ void LutRef::setToPseudoRepresentant(){
 
 unsigned LutRef::countSetBits() const{
   size_t ret = 0;
-  LutMask szMask = inputCount() >= 6 ? lutSizeMask[6] : lutSizeMask[inputCount()];
+  LutMask szMask = getSizeMask(inputCount());
   for(unsigned i=0; i<arraySize(); ++i){
     bitset<64> bs(_lut[i] & szMask);
     ret += bs.count();

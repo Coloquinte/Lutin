@@ -1,7 +1,7 @@
 
 #include "Lut.h"
 
-#include <cassert>
+#include <stdexcept>
 
 using namespace std;
 
@@ -10,7 +10,13 @@ Lut::Lut(unsigned inputCount)
 }
 
 Lut::Lut(unsigned inputCount, unsigned long mask) : Lut(inputCount) {
-  assert(inputCount <= 6);
+  if(inputCount > 6){
+    throw std::logic_error("Too many inputs to be constructed from an unsigned long");
+  }
+  if(inputCount < 6 && mask >= (1lu << bitCount())){
+    throw std::logic_error("Out of range bits are set in the mask");
+  }
+
   _lut[0] = mask;
 }
 
