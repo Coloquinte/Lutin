@@ -9,11 +9,20 @@
 using namespace std;
 
 void testCofactors(Lut const & lut){
+  bool forceMismatch = false;
   for(unsigned in=0; in<lut.inputCount(); ++in){
     if(!lut.getCofactor(in, true).isDC(in) || !lut.getCofactor(in, false).isDC(in)){
-      cerr << lut.inputCount() << " inputs lut failed DC test" << in << std::endl;
+      cerr << lut.inputCount() << "-input lut failed DC test" << in << std::endl;
       abort();
     }
+    if(lut.toggles(in) != (lut.getCofactor(in, false) == Lut::Not(lut.getCofactor(in, true)))) forceMismatch = true;
+    if(lut.forcesValue(in, false, false) != lut.getCofactor(in, false).isConstant(false)) forceMismatch = true;
+    if(lut.forcesValue(in, false, true ) != lut.getCofactor(in, false).isConstant(true )) forceMismatch = true;
+    if(lut.forcesValue(in, true , false) != lut.getCofactor(in, true ).isConstant(false)) forceMismatch = true;
+    if(lut.forcesValue(in, true , true ) != lut.getCofactor(in, true ).isConstant(true )) forceMismatch = true;
+  }
+  if(forceMismatch){
+    cerr << lut.inputCount() << "-input lut failed forcer test" << endl;
   }
 }
 
@@ -74,11 +83,11 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
   for(unsigned in=0; in<inputCnt; ++in){
     bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
     if(!lut.forcesValue(in, forcingIn, forcedVal)){
-      cerr << inputCnt << " inputs generalized And gate forcing failed on input " << in << std::endl;
+      cerr << inputCnt << "-input generalized And gate forcing failed on input " << in << std::endl;
       abort();
     }
     if(lut.forcesValue(in, forcingIn, !forcedVal) || lut.forcesValue(in, !forcingIn, true) || lut.forcesValue(in, !forcingIn, false)){
-      cerr << inputCnt << " inputs generalized And gate false positive on input " << in << std::endl;
+      cerr << inputCnt << "-input generalized And gate false positive on input " << in << std::endl;
       abort();
     }
   }
@@ -97,7 +106,7 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 }
 
 void testGeneralizedAnds(){
-  for(unsigned inCnt=1; inCnt<15u; ++inCnt){
+  for(unsigned inCnt=2; inCnt<15u; ++inCnt){
     for(unsigned inMask=0; inMask < (1u<<inCnt); ++inMask){
       testGeneralizedAnd(inCnt, inMask, false);
       testGeneralizedAnd(inCnt, inMask, true);

@@ -55,6 +55,7 @@ class LutRef{
     bool evaluate(unsigned inputValues) const;
 
     bool isConstant() const;
+    bool isConstant(bool val) const;
     bool isGnd  () const;
     bool isVcc  () const;
     bool isAnd  () const;

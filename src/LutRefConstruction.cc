@@ -31,6 +31,7 @@ LutRef::LutRef(unsigned inputs, LutMask* pt)
 
 // Quick and dirty for now
 bool LutRef::isConstant() const { return isGnd() || isVcc(); }
+bool LutRef::isConstant(bool val) const { return val ? isVcc() : isGnd(); }
 bool LutRef::isGnd  () const { return equal(Lut::Gnd(inputCount())); }
 bool LutRef::isVcc  () const { return equal(Lut::Vcc(inputCount())); }
 bool LutRef::isAnd  () const { return equal(Lut::And(inputCount())); }
