@@ -109,8 +109,12 @@ void LutRef::invertInput(unsigned input){
 }
 
 void LutRef::swapInputs(unsigned i1, unsigned i2){
-  if(i1 == i2) return;
-  if(i1 >= inputCount() && i2 >= inputCount()) throw std::logic_error("Inputs to swap must be valid inputs");
+  if(i1 == i2){
+    return;
+  }
+  if(i1 >= inputCount() && i2 >= inputCount()){
+    throw std::logic_error("Inputs to swap must be valid inputs");
+  }
 
   Lut ret(inputCount());
   for(unsigned inMask=0; inMask < 1u<<inputCount(); ++inMask){
@@ -146,7 +150,6 @@ void LutRef::setToCofactor(unsigned input, bool value){
     }
   }
   else{
-    // TODO: check
     unsigned const stride = 1<<(input-6);
     for(unsigned i=0; i<arraySize(); i += 2*stride){
       for(unsigned j=i; j<i+stride; ++j){
@@ -157,6 +160,25 @@ void LutRef::setToCofactor(unsigned input, bool value){
   }
 }
 
+void LutRef::setFromCofactors(LutRef const & neg, LutRef const & pos, unsigned input){
+  assert(input < inputCount());
+  if(input < 6){
+    for(unsigned i=0; i<arraySize(); ++i){
+      _lut[i] = (neg._lut[i] & ~lutInputMask[input]) | (pos._lut[i] & lutInputMask[input]);
+    }
+  }
+  else{
+    unsigned const stride = 1<<(input-6);
+    for(unsigned i=0; i<arraySize(); i += 2*stride){
+      for(unsigned j=i; j<i+stride; ++j){
+        _lut[j] = neg._lut[j];
+      }
+      for(unsigned j=i+stride; j<i+2*stride; ++j){
+        _lut[j] = pos._lut[j];
+      }
+    }
+  } 
+}
 
 // The 3 following algorithms use a bitmask accumulator rather than an early exit: it is believed - but not tested - to be faster, with fewer instructions and better branch prediction
 
@@ -248,6 +270,17 @@ bool LutRef::isUnate(unsigned input, bool polarity) const {
   }
 }
 
+std::size_t LutRef::countUnate(unsigned input, bool polarity) const{
+  Lut negCofactor = Lut::Cofactor(*this, input, false);
+  Lut posCofactor = Lut::Cofactor(*this, input, true );
+  if(polarity){
+    return (~negCofactor | posCofactor).countSetBits();
+  }
+  else{
+    return (negCofactor | ~posCofactor).countSetBits();
+  }
+}
+
 bool LutRef::hasSingleInputFactorization() const {
   for(unsigned i=0; i<inputCount(); ++i){
     if(toggles(i)) return true;
@@ -323,7 +356,7 @@ void LutRef::setToPseudoRepresentant(){
   assert(isPseudoRepresentant());
 }
 
-unsigned LutRef::countSetBits() const{
+size_t LutRef::countSetBits() const{
   size_t ret = 0;
   LutMask szMask = getSizeMask(inputCount());
   for(unsigned i=0; i<arraySize(); ++i){

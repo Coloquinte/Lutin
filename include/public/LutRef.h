@@ -78,10 +78,10 @@ class LutRef{
 
     // Size of internal structures
 
-    static unsigned long arraySize(unsigned inputCnt);
-    static unsigned long bitCount(unsigned inputCnt);
-    unsigned long arraySize() const;
-    unsigned long bitCount() const;
+    static unsigned arraySize(unsigned inputCnt);
+    static std::size_t bitCount(unsigned inputCnt);
+    unsigned arraySize() const;
+    std::size_t bitCount() const;
 
     // To/from string represented as an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
     std::string str() const;
@@ -98,8 +98,11 @@ class LutRef{
     bool isDC(unsigned input) const;
     bool toggles(unsigned input) const;
     bool forcesValue(unsigned input, bool inVal, bool outVal) const;
+
+    // Is a function unate for a given input, and if not how many bits are against the trend
     bool isUnate(unsigned input) const;
     bool isUnate(unsigned input, bool polarity) const;
+    std::size_t countUnate(unsigned input, bool polarity) const;
 
     bool hasDC() const;
     bool hasSingleInputFactorization() const;
@@ -107,6 +110,8 @@ class LutRef{
     // Get the cofactors, but keep the inputs in position (make the corresponding input DC)
     void setToCofactor(LutRef const & o, unsigned input, bool value);
     void setToCofactor(unsigned input, bool value);
+
+    void setFromCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
 
     // Get a pseudo representant with some input/output inversions and input permutations; it is not unique but is a good approximation for a unique representant
     bool isPseudoRepresentant() const;
@@ -117,7 +122,7 @@ class LutRef{
     // Helper functions
     bool equal(LutRef const & o) const; // Defines equality operators
     void swapToEnd(unsigned input); // Used in optimized swapInputs implementations
-    unsigned countSetBits() const; // Used to compute a pseudorepresentant
+    std::size_t countSetBits() const; // Used to compute a pseudorepresentant
 
     protected:
     // Need to new/delete if managed, or increment if iterator
@@ -131,16 +136,16 @@ struct LutRef::Hash{
   }
 };
 
-inline unsigned long LutRef::arraySize(unsigned inputCnt) {
+inline unsigned LutRef::arraySize(unsigned inputCnt) {
   return inputCnt >= 6 ? 1ul << (inputCnt-6) : 1ul;
 }
-inline unsigned long LutRef::arraySize() const{
+inline unsigned LutRef::arraySize() const{
   return arraySize(inputCount());
 }
-inline unsigned long LutRef::bitCount(unsigned inputCnt) {
+inline std::size_t LutRef::bitCount(unsigned inputCnt) {
   return 1ul << inputCnt;
 }
-inline unsigned long LutRef::bitCount() const{
+inline std::size_t LutRef::bitCount() const{
   return bitCount(inputCount());
 }
 
