@@ -259,6 +259,11 @@ bool LutRef::hasDC() const {
 bool LutRef::isUnate(unsigned input) const {
   return isUnate(input, false) || isUnate(input, true);
 }
+
+bool LutRef::isBinate(unsigned input) const {
+  return !isUnate(input);
+}
+
 bool LutRef::isUnate(unsigned input, bool polarity) const {
   Lut negCofactor = Lut::Cofactor(*this, input, false);
   Lut posCofactor = Lut::Cofactor(*this, input, true );

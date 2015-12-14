@@ -101,6 +101,7 @@ class LutRef{
 
     // Is a function unate for a given input, and if not how many bits are against the trend
     bool isUnate(unsigned input) const;
+    bool isBinate(unsigned input) const;
     bool isUnate(unsigned input, bool polarity) const;
     std::size_t countUnate(unsigned input, bool polarity) const;
 

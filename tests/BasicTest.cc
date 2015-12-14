@@ -90,6 +90,10 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
       cerr << inputCnt << "-input generalized And gate false positive on input " << in << std::endl;
       abort();
     }
+    if(!lut.isUnate(in)){
+      cerr << inputCnt << "-input generalized And gate unate check failed on input " << in << std::endl;
+      abort();
+    }
   }
   testCofactors(lut);
   if(!lut.isGeneralizedAnd()){
@@ -175,7 +179,11 @@ void testXor(){
     testSaveReload(lut);
     for(unsigned in=0; in<i; ++in){
       if(!lut.toggles(in)){
-        cerr << i << " inputs Xor gate failed for input " << in << std::endl;
+        cerr << i << "-input Xor gate toggle check failed for input " << in << std::endl;
+        abort();
+      }
+      if(i >= 2 && lut.isUnate(in)){
+        cerr << i << "-input Xor gate unate check failed for input " << in << std::endl;
         abort();
       }
     }
