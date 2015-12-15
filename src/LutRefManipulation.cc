@@ -373,8 +373,9 @@ size_t LutRef::countSetBits() const{
 
 std::size_t LutRef::getHash() const {
   std::size_t ret = 0;
+  LutMask szMask = getSizeMask(inputCount());
   for(unsigned i=0; i<arraySize(); ++i){
-    ret ^= _lut[i];
+    ret ^= (_lut[i] & szMask);
   }
   return ret;
 }
