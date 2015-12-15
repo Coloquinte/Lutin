@@ -11,17 +11,11 @@
 
 #include <cassert>
 #include <sstream>
-#include <stdexcept>
 #include <iomanip>
 
 using namespace std;
 
 namespace{
-  void checkInputCounts(LutRef const & a, LutRef const & b){
-    if(a.inputCount() != b.inputCount()){
-      throw std::logic_error("Luts have different input counts");
-    }
-  }
 }
 
 LutRef::LutRef(unsigned inputs, LutMask* pt)
@@ -29,11 +23,31 @@ LutRef::LutRef(unsigned inputs, LutMask* pt)
 , _lut(pt) {
 }
 
+bool LutRef::isConstant() const {
+  return isGnd() || isVcc();
+}
+
+bool LutRef::isConstant(bool val) const {
+  return val ? isVcc() : isGnd();
+}
+
+bool LutRef::isGnd  () const {
+  LutMask acc = allZero;
+  for(unsigned i=0; i<arraySize(); ++i){
+    acc |= (_lut[i] ^ allZero);
+  }
+  return (acc & getSizeMask(inputCount())) == allZero;
+}
+
+bool LutRef::isVcc  () const {
+  LutMask acc = allZero;
+  for(unsigned i=0; i<arraySize(); ++i){
+    acc |= (_lut[i] ^ allOne);
+  }
+  return (acc & getSizeMask(inputCount())) == allZero;
+}
+
 // Quick and dirty for now
-bool LutRef::isConstant() const { return isGnd() || isVcc(); }
-bool LutRef::isConstant(bool val) const { return val ? isVcc() : isGnd(); }
-bool LutRef::isGnd  () const { return equal(Lut::Gnd(inputCount())); }
-bool LutRef::isVcc  () const { return equal(Lut::Vcc(inputCount())); }
 bool LutRef::isAnd  () const { return equal(Lut::And(inputCount())); }
 bool LutRef::isOr   () const { return equal(Lut::Or(inputCount())); }
 bool LutRef::isNand () const { return equal(Lut::Nand(inputCount())); }

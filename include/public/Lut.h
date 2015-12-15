@@ -1,6 +1,6 @@
 
-#ifndef LUTIN_LUT
-#define LUTIN_LUT
+#ifndef LUTIN_LUT_H
+#define LUTIN_LUT_H
 
 #include "LutRef.h"
 

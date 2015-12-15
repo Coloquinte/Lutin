@@ -1,6 +1,6 @@
 
-#ifndef LUTIN_LUTREF
-#define LUTIN_LUTREF
+#ifndef LUTIN_LUTREF_H
+#define LUTIN_LUTREF_H
 
 #include <cstdint>
 #include <string>

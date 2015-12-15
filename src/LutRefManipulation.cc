@@ -4,21 +4,9 @@
 #include "LutUtils.h"
 
 #include <cassert>
-#include <stdexcept>
 #include <bitset>
 
 using namespace std;
-
-namespace{
-  void checkInputMask(LutRef const & lut, unsigned inputValues) {
-    if(inputValues >= (1u<<lut.inputCount())){
-      throw std::logic_error("Out of range bits are set in the given input mask");
-    }
-  }
-  LutRef::LutMask getSizeMask(unsigned inputCount){
-    return inputCount >= 6 ? lutSizeMask[6] : lutSizeMask[inputCount];
-  }
-}
 
 bool LutRef::equal(LutRef const & b) const{
   if(inputCount() != b.inputCount()) return false;

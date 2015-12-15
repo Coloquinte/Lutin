@@ -1,6 +1,6 @@
 
-#ifndef LUTIN_LUTPRINT
-#define LUTIN_LUTPRINT
+#ifndef LUTIN_LUTPRINT_H
+#define LUTIN_LUTPRINT_H
 
 #include "Lut.h"
 #include <iosfwd>
