@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <unordered_set>
+
 using namespace std;
 
 void testCofactors(Lut const & lut){
@@ -111,7 +113,7 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 
 void testGeneralizedAnds(){
   for(unsigned inCnt=2; inCnt<15u; ++inCnt){
-    for(unsigned inMask=0; inMask < (1u<<inCnt); ++inMask){
+    for(unsigned inMask=0; inMask < Lut::bitCount(inCnt); ++inMask){
       testGeneralizedAnd(inCnt, inMask, false);
       testGeneralizedAnd(inCnt, inMask, true);
     }
@@ -189,7 +191,7 @@ void testXor(){
     }
     testCofactors(lut);
     if(!lut.isGeneralizedXor()){
-      cerr << "Generalized And check failed" << std::endl;
+      cerr << "Generalized Xor check failed" << std::endl;
       abort();
     }
   }
@@ -231,6 +233,56 @@ void testBuf(){
   cout << "Buf test OK" << std::endl;
 }
 
+void testRepresentants(){
+  for(unsigned inputCount = 2; inputCount <= 4; ++inputCount){
+    unordered_set<Lut, Lut::Hash> complexRepresentants, nonTrivialRepresentants;
+    unsigned long totCount = (1Lu << Lut::bitCount(inputCount));
+    unsigned long nonTrivialCount = 0;
+    unsigned long complexCount = 0;
+    for(unsigned long i=0; i < totCount; ++i){
+      Lut cur(inputCount, i);
+      if(!cur.hasDC()){
+        ++nonTrivialCount;
+        if(!cur.hasSingleInputFactorization()){
+          complexCount++;
+          if(cur.isPseudoRepresentant()){
+            complexRepresentants.emplace(cur);
+          }
+        }
+        if(cur.isPseudoRepresentant()){
+          if(cur != cur.getPseudoRepresentant()){
+            cerr << "Pseudo-representant " << cur << " is different than its calculated pseuo-representant " << cur.getPseudoRepresentant() << endl;
+          }
+          nonTrivialRepresentants.emplace(cur);
+        }
+      }
+    }
+
+    //cout << "For Lut size " << inputCount << ": (total Lut count " << totCount << ")" << endl;
+    //cout << "\tGot " << nonTrivialCount << " non-trivial Luts totalizing " << nonTrivialRepresentants.size() << " representants" << endl;
+    //cout << "\tGot " << complexCount << " complex Luts totalizing " << complexRepresentants.size() << " representants" << endl;
+
+    //cout << "Printing non_trivial representants:" << endl;
+    //for(auto const cur : nonTrivialRepresentants) cout << cur << endl;
+
+    for(unsigned long i=0; i < totCount; ++i){
+      Lut cur(inputCount, i);
+      if(!cur.hasDC()){
+        if(!cur.hasSingleInputFactorization()){
+          if(complexRepresentants.count(cur.getPseudoRepresentant()) == 0){
+            cerr << "The representant of the complex Lut " << cur << " is " << cur.getPseudoRepresentant() << " and wasn't found" << endl;
+            abort();
+          }
+        }
+        else if(nonTrivialRepresentants.count(cur.getPseudoRepresentant()) == 0){
+          cerr << "The representant of the non-trivial Lut " << cur << " is " << cur.getPseudoRepresentant() << " and wasn't found" << endl;
+          abort();
+        }
+      }
+    }
+  }
+}
+
 int main(){
   testBuf();
   testAnd();
@@ -238,6 +290,7 @@ int main(){
   testNand();
   testNor();
   testXor();
+  testRepresentants();
   testGeneralizedAnds();
 
   return 0;
