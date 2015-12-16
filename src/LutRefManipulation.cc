@@ -306,7 +306,11 @@ bool LutRef::isPseudoRepresentant() const{
   for(unsigned input=0; input+1<inputCount(); ++input){
     tmp1.setToCofactor(*this, input, true);
     tmp2.setToCofactor(*this, input+1, true);
-    if(tmp1.countSetBits() > tmp2.countSetBits()){
+    std::size_t cnt1 = tmp1.countSetBits(), cnt2 = tmp2.countSetBits();
+    if(cnt1 > cnt2){
+      return false;
+    }
+    else if(cnt1 == cnt2 && countUnate(input, true) < countUnate(input+1, true)){
       return false;
     }
   }
@@ -341,7 +345,11 @@ void LutRef::setToPseudoRepresentant(){
     for(unsigned input=0; input+1<end; ++input){
       tmp1.setToCofactor(*this, input, true);
       tmp2.setToCofactor(*this, input+1, true);
-      if(tmp1.countSetBits() > tmp2.countSetBits()){
+      std::size_t cnt1 = tmp1.countSetBits(), cnt2 = tmp2.countSetBits();
+      if(cnt1 > cnt2){
+        swapInputs(input, input+1);
+      }
+      else if(cnt1 == cnt2 && countUnate(input, true) < countUnate(input+1, true)){
         swapInputs(input, input+1);
       }
     }
