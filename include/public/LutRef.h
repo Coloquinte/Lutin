@@ -107,16 +107,16 @@ class LutRef{
 
     bool hasDC() const;
     bool hasSingleInputFactorization() const;
+    bool hasTwoInputFactorization() const;
 
     // Get the cofactors, but keep the inputs in position (make the corresponding input DC)
     void setToCofactor(LutRef const & o, unsigned input, bool value);
     void setToCofactor(unsigned input, bool value);
-
     void setFromCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
 
+    // Get the cofactors, but reduce the number of inputs (the last input replaces the one that is removed)
     void setToCompactCofactor(LutRef const & o, unsigned input, bool value);
     void setToCompactCofactor(unsigned input, bool value);
-
     void setFromCompactCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
 
     // Get a pseudo representant with some input/output inversions and input permutations; it is not unique but is a good approximation for a unique representant

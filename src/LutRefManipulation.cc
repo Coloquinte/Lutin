@@ -318,11 +318,38 @@ bool LutRef::hasSingleInputFactorization() const {
   return false;
 }
 
+bool LutRef::hasTwoInputFactorization() const {
+  Lut pos(inputCount());
+  Lut neg(inputCount());
+  Lut pospos(inputCount());
+  Lut posneg(inputCount());
+  Lut negpos(inputCount());
+  Lut negneg(inputCount());
+  for(unsigned i=0; i+1<inputCount(); ++i){
+    pos.setToCofactor(*this, i, true);
+    neg.setToCofactor(*this, i, false);
+    for(unsigned j=i+1; j<inputCount(); ++j){
+      pospos.setToCofactor(pos, j, true );
+      posneg.setToCofactor(pos, j, false);
+      negpos.setToCofactor(neg, j, true );
+      negneg.setToCofactor(neg, j, false);
+      // Now if there are only two possible cofactors we can factor it away
+      // Just forget about the DC cases
+      // First the And/Or type
+      if(pos == negneg || pos == negpos) return true;
+      if(neg == posneg || neg == pospos) return true;
+      // Then the Xor type
+      if(posneg == negpos && pospos == negneg) return true;
+    }
+  }
+  return false;
+}
+
 bool LutRef::isPseudoRepresentant() const{
   Lut tmp1(inputCount()), tmp2(inputCount());
 
   // A pseudo-representant has half the bits or more set
-  if(countSetBits() < (1u << (inputCount()-1))){
+  if(2*countSetBits() < bitCount()){
     return false;
   }
 
@@ -360,7 +387,7 @@ void LutRef::setToPseudoRepresentant(){
   Lut tmp1(inputCount()), tmp2(inputCount());
 
   // Invert the output if necessary to obtain majority of bit sets
-  if(countSetBits() < (1u << (inputCount()-1))){
+  if(2*countSetBits() < bitCount()){
     invert();
   }
 

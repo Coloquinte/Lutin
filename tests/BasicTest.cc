@@ -52,6 +52,14 @@ void testForce(Lut const & lut){
   }
 }
 
+void testRepresentant(Lut const & lut){
+  Lut pseudoRepr = lut.getPseudoRepresentant();
+  if(lut.isPseudoRepresentant() && lut != pseudoRepr){
+    cerr << "Failed pseudo-representant stability check on Lut" << lut << " with representant " << pseudoRepr << endl;
+    abort();
+  }
+}
+
 void testSaveReload(Lut const & lut){
   if(lut.inputCount() >= 2){
     string strRepr = lut.str();
@@ -97,6 +105,14 @@ void genericTests(Lut const & lut){
   testSwapInputs(lut);
   testCofactors(lut);
   testForce(lut);
+  testRepresentant(lut);
+}
+
+void testSimpleGate(Lut const & lut){
+  if(lut.hasDC() || !lut.hasSingleInputFactorization() || !lut.hasTwoInputFactorization()){
+    cerr << "Failed algorithm check" << endl;
+    abort();
+  }
 }
 
 Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
@@ -108,10 +124,8 @@ Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 
 void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
   Lut lut = getGeneralizedAnd(inputCnt, inputValues, inverted);
-  if(lut.inputCount() != inputCnt){
-    cerr << "Input counts don't match" << std::endl;
-  }
   genericTests(lut);
+  testSimpleGate(lut);
   for(unsigned in=0; in<inputCnt; ++in){
     bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
     if(!lut.forcesValue(in, forcingIn, forcedVal)){
@@ -131,12 +145,10 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
     cerr << "Generalized And check failed for " << inputCnt << " input" << std::endl;
     abort();
   }
-  Lut pseudoRepr = lut.getPseudoRepresentant();
-  if(lut.isPseudoRepresentant() && lut != pseudoRepr){
-    cerr << "Failed pseudo-representant stability check" << endl;
-  }
-  if(pseudoRepr != getGeneralizedAnd(inputCnt, 0u, true)){
+
+  if(lut.getPseudoRepresentant() != getGeneralizedAnd(inputCnt, 0u, true)){
     cerr << "Unexpected pseudo-representant of generalized and" << endl;
+    abort();
   }
 }
 
@@ -200,9 +212,10 @@ void testNand(){
 }
 
 void testXor(){
-  for(unsigned i=0; i<15; ++i){
+  for(unsigned i=2; i<15; ++i){
     Lut lut = Lut::Xor(i);
     genericTests(lut);
+    testSimpleGate(lut);
     Lut reference = Lut::Exor(i);
     if(Lut::Not(reference) != lut){
       cerr << "Xor check failed for " << lut << std::endl;
@@ -272,7 +285,7 @@ void testRepresentants(){
       Lut cur(inputCount, i);
       if(!cur.hasDC()){
         ++nonTrivialCount;
-        if(!cur.hasSingleInputFactorization()){
+        if(!cur.hasSingleInputFactorization() && !cur.hasTwoInputFactorization()){
           complexCount++;
           if(cur.isPseudoRepresentant()){
             complexRepresentants.emplace(cur);
@@ -287,9 +300,9 @@ void testRepresentants(){
       }
     }
 
-    //cout << "For Lut size " << inputCount << ": (total Lut count " << totCount << ")" << endl;
-    //cout << "\tGot " << nonTrivialCount << " non-trivial Luts totalizing " << nonTrivialRepresentants.size() << " representants" << endl;
-    //cout << "\tGot " << complexCount << " complex Luts totalizing " << complexRepresentants.size() << " representants" << endl;
+    cout << "For Lut size " << inputCount << ": (total Lut count " << totCount << ")" << endl;
+    cout << "\tGot " << nonTrivialCount << " non-trivial Luts totalizing " << nonTrivialRepresentants.size() << " representants" << endl;
+    cout << "\tGot " << complexCount << " complex Luts totalizing " << complexRepresentants.size() << " representants" << endl;
 
     //cout << "Printing non_trivial representants:" << endl;
     //for(auto const cur : nonTrivialRepresentants) cout << cur << endl;
@@ -297,7 +310,7 @@ void testRepresentants(){
     for(unsigned long i=0; i < totCount; ++i){
       Lut cur(inputCount, i);
       if(!cur.hasDC()){
-        if(!cur.hasSingleInputFactorization()){
+        if(!cur.hasSingleInputFactorization() && !cur.hasTwoInputFactorization()){
           if(complexRepresentants.count(cur.getPseudoRepresentant()) == 0){
             cerr << "The representant of the complex Lut " << cur << " is " << cur.getPseudoRepresentant() << " and wasn't found" << endl;
             abort();
