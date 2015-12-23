@@ -54,6 +54,18 @@ inline void checkInputCounts(LutRef const & a, LutRef const & b){
   }
 }
 
+inline void checkInput(LutRef const & lut, unsigned input) {
+  if(input >= lut.inputCount()){
+    throw std::logic_error("Out of range Lut input");
+  }
+}
+
+inline void checkSizeMinusOne(LutRef const & a, LutRef const & b){
+  if(a.inputCount()-1 != b.inputCount()){
+    throw std::logic_error("Luts have incompatible sizes");
+  }
+}
+
 }
 
 #endif

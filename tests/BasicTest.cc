@@ -11,20 +11,44 @@
 using namespace std;
 
 void testCofactors(Lut const & lut){
-  bool forceMismatch = false;
   for(unsigned in=0; in<lut.inputCount(); ++in){
-    if(!lut.getCofactor(in, true).isDC(in) || !lut.getCofactor(in, false).isDC(in)){
+    Lut posCofactor = lut.getCofactor(in, true);
+    Lut negCofactor = lut.getCofactor(in, false);
+    if(Lut::FromCofactors(negCofactor, posCofactor, in) != lut){
+      cerr << lut.inputCount() << "-input lut failed cofactor test " << in << endl;
+      abort();
+    }
+
+    Lut posCompactCofactor = lut.getCompactCofactor(in, true);
+    Lut negCompactCofactor = lut.getCompactCofactor(in, false);
+    if(Lut::FromCompactCofactors(negCompactCofactor, posCompactCofactor, in) != lut){
+      cerr << lut.inputCount() << "-input lut failed cofactor test " << in << endl;
+      abort();
+    }
+  }
+}
+
+void testForce(Lut const & lut){
+  for(unsigned in=0; in<lut.inputCount(); ++in){
+    Lut posCofactor = lut.getCofactor(in, true);
+    Lut negCofactor = lut.getCofactor(in, false);
+    if(!posCofactor.isDC(in) || !negCofactor.isDC(in)){
       cerr << lut.inputCount() << "-input lut failed DC test" << in << std::endl;
       abort();
     }
-    if(lut.toggles(in) != (lut.getCofactor(in, false) == Lut::Not(lut.getCofactor(in, true)))) forceMismatch = true;
-    if(lut.forcesValue(in, false, false) != lut.getCofactor(in, false).isConstant(false)) forceMismatch = true;
-    if(lut.forcesValue(in, false, true ) != lut.getCofactor(in, false).isConstant(true )) forceMismatch = true;
-    if(lut.forcesValue(in, true , false) != lut.getCofactor(in, true ).isConstant(false)) forceMismatch = true;
-    if(lut.forcesValue(in, true , true ) != lut.getCofactor(in, true ).isConstant(true )) forceMismatch = true;
-  }
-  if(forceMismatch){
-    cerr << lut.inputCount() << "-input lut failed forcer test" << endl;
+
+    bool forceMismatch = false;
+
+    if(lut.toggles(in) != (negCofactor == Lut::Not(posCofactor))) forceMismatch = true;
+    if(lut.forcesValue(in, false, false) != negCofactor.isConstant(false)) forceMismatch = true;
+    if(lut.forcesValue(in, false, true ) != negCofactor.isConstant(true )) forceMismatch = true;
+    if(lut.forcesValue(in, true , false) != posCofactor.isConstant(false)) forceMismatch = true;
+    if(lut.forcesValue(in, true , true ) != posCofactor.isConstant(true )) forceMismatch = true;
+    
+    if(forceMismatch){
+      cerr << lut.inputCount() << "-input lut failed forcer test " << in << endl;
+      abort();
+    }
   }
 }
 
@@ -57,7 +81,7 @@ void testSwapInputs(Lut const & lut){
 
 void testInvertInput(Lut const & lut){
   Lut dup = lut;
-  for(unsigned i=0; i<lut.inputCount()-1; ++i){
+  for(unsigned i=0; i<lut.inputCount(); ++i){
     dup.invertInput(i);
     dup.invertInput(i);
     if(dup != lut){
@@ -65,6 +89,14 @@ void testInvertInput(Lut const & lut){
       abort();
     }
   }
+}
+
+void genericTests(Lut const & lut){
+  testSaveReload(lut);
+  testInvertInput(lut);
+  testSwapInputs(lut);
+  testCofactors(lut);
+  testForce(lut);
 }
 
 Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
@@ -79,9 +111,7 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
   if(lut.inputCount() != inputCnt){
     cerr << "Input counts don't match" << std::endl;
   }
-  testSaveReload(lut);
-  testInvertInput(lut);
-  if(inputCnt <= 10) testSwapInputs(lut);
+  genericTests(lut);
   for(unsigned in=0; in<inputCnt; ++in){
     bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
     if(!lut.forcesValue(in, forcingIn, forcedVal)){
@@ -97,7 +127,6 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
       abort();
     }
   }
-  testCofactors(lut);
   if(!lut.isGeneralizedAnd()){
     cerr << "Generalized And check failed for " << inputCnt << " input" << std::endl;
     abort();
@@ -112,7 +141,7 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 }
 
 void testGeneralizedAnds(){
-  for(unsigned inCnt=2; inCnt<15u; ++inCnt){
+  for(unsigned inCnt=2; inCnt<10u; ++inCnt){
     for(unsigned inMask=0; inMask < Lut::bitCount(inCnt); ++inMask){
       testGeneralizedAnd(inCnt, inMask, false);
       testGeneralizedAnd(inCnt, inMask, true);
@@ -173,6 +202,7 @@ void testNand(){
 void testXor(){
   for(unsigned i=0; i<15; ++i){
     Lut lut = Lut::Xor(i);
+    genericTests(lut);
     Lut reference = Lut::Exor(i);
     if(Lut::Not(reference) != lut){
       cerr << "Xor check failed for " << lut << std::endl;
@@ -189,7 +219,6 @@ void testXor(){
         abort();
       }
     }
-    testCofactors(lut);
     if(!lut.isGeneralizedXor()){
       cerr << "Generalized Xor check failed" << std::endl;
       abort();

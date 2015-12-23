@@ -30,11 +30,16 @@ class Lut : public LutRef {
     static Lut Exor (LutRef const & a, LutRef const & b);
 
     static Lut Cofactor (LutRef const & a, unsigned input, bool value);
+    static Lut FromCofactors (LutRef const & neg, LutRef const & pos, unsigned input);
+    static Lut CompactCofactor (LutRef const & a, unsigned input, bool value);
+    static Lut FromCompactCofactors (LutRef const & neg, LutRef const & pos, unsigned input);
     static Lut PseudoRepresentant (LutRef const & a);
+    static Lut SwappedInputs (LutRef const & a, unsigned i1, unsigned i2);
 
     void setInputCount(unsigned inputCnt);
 
     Lut getCofactor (unsigned input, bool value) const;
+    Lut getCompactCofactor (unsigned input, bool value) const;
     Lut getPseudoRepresentant() const;
 
     // Contructors (default is the ground lut)

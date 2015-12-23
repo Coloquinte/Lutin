@@ -26,6 +26,7 @@ bool LutRef::evaluate(unsigned inputValues) const{
 
   unsigned lutChunk = inputValues >> 6;
   assert(lutChunk < arraySize());
+
   unsigned chunkInd = inputValues & 0x003f;
   return ((_lut[lutChunk] >> chunkInd) & 0x01) != 0;
 }
@@ -41,6 +42,7 @@ void LutRef::setVal(unsigned inputValues, bool val){
 
   unsigned lutChunk = inputValues >> 6;
   assert(lutChunk < arraySize());
+
   unsigned chunkInd = inputValues & 0x003f;
   if(val) _lut[lutChunk] |=  (one << chunkInd);
   else    _lut[lutChunk] &= ~(one << chunkInd);
@@ -77,7 +79,8 @@ bool LutRef::isGeneralizedXor() const{
 }
 
 void LutRef::invertInput(unsigned input){
-  if(input >= inputCount()) throw std::logic_error("Inverted input must be valid");
+  checkInput(*this, input);
+
   if(input < 6){
     for(unsigned i=0; i<arraySize(); ++i){
       LutMask lowerPart = _lut[i] & ~lutInputMask[input]; 
@@ -96,23 +99,28 @@ void LutRef::invertInput(unsigned input){
   }
 }
 
-void LutRef::swapInputs(unsigned i1, unsigned i2){
-  if(i1 == i2){
-    return;
-  }
-  if(i1 >= inputCount() && i2 >= inputCount()){
-    throw std::logic_error("Inputs to swap must be valid inputs");
-  }
+void LutRef::setToSwappedInputs(LutRef const & a, unsigned i1, unsigned i2){
+  checkInputCounts(*this, a);
 
-  Lut ret(inputCount());
+  if(i1 == i2){
+    operator=(a);
+  }
+  checkInput(*this, i1);
+  checkInput(*this, i2);
+
   for(unsigned inMask=0; inMask < 1u<<inputCount(); ++inMask){
     unsigned bit1Sel = 1u << i1;
     unsigned bit2Sel = 1u << i2;
     unsigned swappedMask = inMask & ~bit1Sel & ~bit2Sel;
     if((bit1Sel & inMask) != 0u) swappedMask |= bit2Sel;
     if((bit2Sel & inMask) != 0u) swappedMask |= bit1Sel;
-    ret.setVal(swappedMask, evaluate(inMask));
+    setVal(swappedMask, a.evaluate(inMask));
   }
+}
+
+void LutRef::swapInputs(unsigned i1, unsigned i2){
+  Lut ret(inputCount());
+  ret.setToSwappedInputs(*this, i1, i2);
   operator=(ret);
 }
 
@@ -166,6 +174,31 @@ void LutRef::setFromCofactors(LutRef const & neg, LutRef const & pos, unsigned i
       }
     }
   } 
+}
+
+void LutRef::setToCompactCofactor(LutRef const & o, unsigned input, bool value){
+  checkSizeMinusOne(o, *this);
+  checkInput(o, input);
+
+  setGnd();
+  Lut tmp = Lut::SwappedInputs(o, input, o.inputCount()-1);
+  size_t offs = value ? bitCount() : 0;
+  for(size_t i=0; i<bitCount(); ++i){
+    setVal(i, tmp.evaluate(offs + i));
+  }
+}
+
+void LutRef::setFromCompactCofactors(LutRef const & neg, LutRef const & pos, unsigned input){
+  checkSizeMinusOne(*this, pos);
+  checkSizeMinusOne(*this, neg);
+  checkInput(*this, input);
+ 
+  setGnd();
+  for(size_t i=0; i<bitCount(inputCount()-1); ++i){
+    setVal(i, neg.evaluate(i));
+    setVal(i + bitCount(inputCount()-1), pos.evaluate(i));
+  }
+  swapInputs(inputCount()-1, input);
 }
 
 // The 3 following algorithms use a bitmask accumulator rather than an early exit: it is believed - but not tested - to be faster, with fewer instructions and better branch prediction

@@ -1,5 +1,6 @@
 
 #include "Lut.h"
+#include "LutUtils.h"
 
 #include <stdexcept>
 
@@ -91,6 +92,16 @@ Lut Lut::getCofactor(unsigned input, bool value) const {
   return Cofactor(*this, input, value);
 }
 
+Lut Lut::CompactCofactor(LutRef const & a, unsigned input, bool value) {
+  Lut ret(a.inputCount()-1);
+  ret.setToCompactCofactor(a, input, value);
+  return ret;
+}
+
+Lut Lut::getCompactCofactor(unsigned input, bool value) const {
+  return CompactCofactor(*this, input, value);
+}
+
 Lut Lut::PseudoRepresentant(LutRef const & a) {
   Lut ret(a.inputCount());
   ret.setToPseudoRepresentant(a);
@@ -99,5 +110,27 @@ Lut Lut::PseudoRepresentant(LutRef const & a) {
 
 Lut Lut::getPseudoRepresentant() const {
   return PseudoRepresentant(*this);
+}
+
+Lut Lut::SwappedInputs(LutRef const & a, unsigned i1, unsigned i2) {
+  Lut ret(a.inputCount());
+  ret.setToSwappedInputs(a, i1, i2);
+  return ret;
+}
+
+Lut Lut::FromCofactors(LutRef const & neg, LutRef const & pos, unsigned input){
+  checkInputCounts(neg, pos);
+
+  Lut ret(neg.inputCount());
+  ret.setFromCofactors(neg, pos, input);
+  return ret;
+}
+
+Lut Lut::FromCompactCofactors(LutRef const & neg, LutRef const & pos, unsigned input){
+  checkInputCounts(neg, pos);
+
+  Lut ret(neg.inputCount()+1);
+  ret.setFromCompactCofactors(neg, pos, input);
+  return ret;
 }
 

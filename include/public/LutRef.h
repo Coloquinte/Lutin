@@ -48,7 +48,7 @@ class LutRef{
     void invert();
     void setVal(unsigned inputValues, bool val);
     void swapInputs(unsigned i1, unsigned i2);
-    void setSwappedInputs(LutRef const & o, unsigned i1, unsigned i2);
+    void setToSwappedInputs(LutRef const & o, unsigned i1, unsigned i2);
 
     // Basic queries
     unsigned inputCount() const { return _inputCnt; }
@@ -113,6 +113,11 @@ class LutRef{
     void setToCofactor(unsigned input, bool value);
 
     void setFromCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
+
+    void setToCompactCofactor(LutRef const & o, unsigned input, bool value);
+    void setToCompactCofactor(unsigned input, bool value);
+
+    void setFromCompactCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
 
     // Get a pseudo representant with some input/output inversions and input permutations; it is not unique but is a good approximation for a unique representant
     bool isPseudoRepresentant() const;
