@@ -304,8 +304,8 @@ void testRepresentants(){
     cout << "\tGot " << nonTrivialCount << " non-trivial Luts totalizing " << nonTrivialRepresentants.size() << " representants" << endl;
     cout << "\tGot " << complexCount << " complex Luts totalizing " << complexRepresentants.size() << " representants" << endl;
 
-    //cout << "Printing non_trivial representants:" << endl;
-    //for(auto const cur : nonTrivialRepresentants) cout << cur << endl;
+    //cout << "Printing complex representants:" << endl;
+    //for(auto const cur : complexRepresentants) cout << cur << endl;
 
     for(unsigned long i=0; i < totCount; ++i){
       Lut cur(inputCount, i);

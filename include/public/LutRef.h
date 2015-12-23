@@ -104,6 +104,7 @@ class LutRef{
     bool isBinate(unsigned input) const;
     bool isUnate(unsigned input, bool polarity) const;
     std::size_t countUnate(unsigned input, bool polarity) const;
+    std::size_t countUnate(unsigned input) const;
 
     bool hasDC() const;
     bool hasSingleInputFactorization() const;

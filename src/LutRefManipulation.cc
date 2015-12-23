@@ -296,6 +296,10 @@ bool LutRef::isUnate(unsigned input, bool polarity) const {
   }
 }
 
+std::size_t LutRef::countUnate(unsigned input) const{
+  return std::max(countUnate(input, true), countUnate(input, false));
+}
+
 std::size_t LutRef::countUnate(unsigned input, bool polarity) const{
   Lut negCofactor = Lut::Cofactor(*this, input, false);
   Lut posCofactor = Lut::Cofactor(*this, input, true );
