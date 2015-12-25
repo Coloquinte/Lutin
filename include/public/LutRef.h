@@ -128,7 +128,7 @@ class LutRef{
     private:
     // Helper functions
     bool equal(LutRef const & o) const; // Defines equality operators
-    void swapToEnd(unsigned input); // Used in optimized swapInputs implementations
+    void swapToBegin(unsigned input); // Used in optimized swapInputs implementations
     std::size_t countSetBits() const; // Used to compute a pseudorepresentant
 
     protected:

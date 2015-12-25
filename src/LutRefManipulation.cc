@@ -124,8 +124,46 @@ void LutRef::swapInputs(unsigned i1, unsigned i2){
   operator=(ret);
 }
 
-void LutRef::swapToEnd(unsigned input){
-  swapInputs(inputCount()-1, input);
+void LutRef::swapToBegin(unsigned input){
+  checkInput(*this, input);
+
+  Lut reference = Lut::SwappedInputs(*this, 0, input);
+
+  // Four possibilities for each bit: it is shifted differently depending on the two cofactors it is in
+  if(input >= 6){
+    unsigned const stride = 1<<(input-6);
+    for(unsigned i=0; i<arraySize(); i += 2*stride){
+      for(unsigned j=i; j<i+stride; ++j){
+        LutMask f00 = _lut[j       ] & ~lutInputMask[0];
+        LutMask f01 = _lut[j       ] &  lutInputMask[0];
+        LutMask f10 = _lut[j+stride] & ~lutInputMask[0];
+        LutMask f11 = _lut[j+stride] &  lutInputMask[0];
+        _lut[j       ] = f00 | (f10 << 1);
+        _lut[j+stride] = f11 | (f01 >> 1);
+      }
+    }
+  }
+  else{
+    unsigned shiftAmount = 1u << input;
+    for(unsigned i=0; i<arraySize(); ++i){
+      LutMask f00 = _lut[i] & (~lutInputMask[input] & ~lutInputMask[0]);
+      LutMask f01 = _lut[i] & (~lutInputMask[input] &  lutInputMask[0]);
+      LutMask f10 = _lut[i] & ( lutInputMask[input] & ~lutInputMask[0]);
+      LutMask f11 = _lut[i] & ( lutInputMask[input] &  lutInputMask[0]);
+
+      LutMask nf01 = (f10 >> (shiftAmount-1));
+      LutMask nf10 = (f01 << (shiftAmount-1));
+
+      _lut[i] = f00 | f11 | nf01 | nf10;
+
+      assert((nf01 & nf10) == 0); 
+      assert((nf01 & f11 ) == 0); 
+      assert((nf01 & f00 ) == 0); 
+      assert((nf10 & f11 ) == 0); 
+      assert((nf10 & f00 ) == 0); 
+    }
+  }
+  assert(equal(reference));
 }
 
 void LutRef::setToCofactor(LutRef const & o, unsigned input, bool value){
