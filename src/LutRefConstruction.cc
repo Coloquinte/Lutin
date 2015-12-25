@@ -15,9 +15,6 @@
 
 using namespace std;
 
-namespace{
-}
-
 LutRef::LutRef(unsigned inputs, LutMask* pt)
 : _inputCnt(inputs)
 , _lut(pt) {

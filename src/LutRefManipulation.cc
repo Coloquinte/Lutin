@@ -102,32 +102,32 @@ void LutRef::invertInput(unsigned input){
 void LutRef::setToSwappedInputs(LutRef const & a, unsigned i1, unsigned i2){
   checkInputCounts(*this, a);
 
-  if(i1 == i2){
-    operator=(a);
-  }
-  checkInput(*this, i1);
-  checkInput(*this, i2);
-
-  for(unsigned inMask=0; inMask < 1u<<inputCount(); ++inMask){
-    unsigned bit1Sel = 1u << i1;
-    unsigned bit2Sel = 1u << i2;
-    unsigned swappedMask = inMask & ~bit1Sel & ~bit2Sel;
-    if((bit1Sel & inMask) != 0u) swappedMask |= bit2Sel;
-    if((bit2Sel & inMask) != 0u) swappedMask |= bit1Sel;
-    setVal(swappedMask, a.evaluate(inMask));
-  }
+  operator=(a);
+  swapInputs(i1, i2);
 }
 
 void LutRef::swapInputs(unsigned i1, unsigned i2){
-  Lut ret(inputCount());
-  ret.setToSwappedInputs(*this, i1, i2);
-  operator=(ret);
+  checkInput(*this, i1);
+  checkInput(*this, i2);
+
+  if(i1 == i2){
+    return;
+  }
+  else if(i1 == 0){
+    swapToBegin(i2);
+  }
+  else if(i2 == 0){
+    swapToBegin(i1);
+  }
+  else{
+    swapToBegin(i1);
+    swapToBegin(i2);
+    swapToBegin(i1);
+  }
 }
 
 void LutRef::swapToBegin(unsigned input){
   checkInput(*this, input);
-
-  Lut reference = Lut::SwappedInputs(*this, 0, input);
 
   // Four possibilities for each bit: it is shifted differently depending on the two cofactors it is in
   if(input >= 6){
@@ -163,7 +163,6 @@ void LutRef::swapToBegin(unsigned input){
       assert((nf10 & f00 ) == 0); 
     }
   }
-  assert(equal(reference));
 }
 
 void LutRef::setToCofactor(LutRef const & o, unsigned input, bool value){
