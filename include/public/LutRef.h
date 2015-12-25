@@ -6,11 +6,31 @@
 #include <string>
 #include <algorithm>
 
+namespace Simplification{
+  enum struct OneInput{
+    None,
+    DC,
+    F00,
+    F01,
+    F10,
+    F11,
+    Toggles
+  };
+
+  enum struct TwoInput{
+    None,
+    Symm,
+    SymmInv
+  };
+}
+
 class LutRef{
     public:
     typedef std::uint64_t LutMask;
 
     public:
+  // Constructors/basic operators
+
     // Contructors (default is the ground lut)
     LutRef(unsigned inputs = -1, LutMask* pt = nullptr);
 
@@ -18,7 +38,22 @@ class LutRef{
     LutRef(LutRef const & o) = delete;
     LutRef& operator=(LutRef const & o);
 
+  // Size of the Lut ands its internal structures
+
+    // Number of inputs
+    unsigned inputCount() const { return _inputCnt; }
+    // Size of the internal array (in uint64_t)
+    static unsigned arraySize(unsigned inputCnt);
+    unsigned arraySize() const;
+    // Bit-level size (2^n)
+    static std::size_t bitCount(unsigned inputCnt);
+    std::size_t bitCount() const;
+
     public:
+
+  // Basic lut creation
+
+    // As basic functions
     void setGnd  ();
     void setVcc  ();
     void setAnd  ();
@@ -31,7 +66,7 @@ class LutRef{
     void setBuf  (unsigned wireInput);
     void setInv  (unsigned wireInput);
 
-    // Operations on same-size Luts with a common input set
+    // From other Luts
     void setNot  (LutRef const & a);
     void setAnd  (LutRef const & a, LutRef const & b);
     void setOr   (LutRef const & a, LutRef const & b);
@@ -40,21 +75,24 @@ class LutRef{
     void setXor  (LutRef const & a, LutRef const & b);
     void setExor (LutRef const & a, LutRef const & b);
 
+  // In-place modifications
     void operator&=(LutRef const & o);
     void operator|=(LutRef const & o);
     void operator^=(LutRef const & o);
-
-    // Basic modifiers: invert one input or the output
-    void invertInput(unsigned input);
     void invert();
-    void setVal(std::size_t inputValues, bool val);
+    void invertInput(unsigned input);
     void swapInputs(unsigned i1, unsigned i2);
+
+  // Set from another Lut
+    void setToInverted(LutRef const & o);
+    void setToInvertedInput(LutRef const & o, unsigned input);
     void setToSwappedInputs(LutRef const & o, unsigned i1, unsigned i2);
 
-    // Basic queries
-    unsigned inputCount() const { return _inputCnt; }
+  // Bit-level queries
+    void setVal(std::size_t inputValues, bool val);
     bool evaluate(std::size_t inputValues) const;
 
+  // Simple logic queries
     bool isConstant() const;
     bool isConstant(bool val) const;
     bool isGnd  () const;
@@ -65,26 +103,17 @@ class LutRef{
     bool isNor  () const;
     bool isXor  () const;
     bool isExor () const;
-
-    // And/Xor with some input and output inversions
+    // n-input And/Xor with some input and output inversions
     bool isGeneralizedAnd() const;
     bool isGeneralizedXor() const;
 
-    // Logic comparison
+  // Logic comparison + hash
     bool operator==(LutRef const & b) const { return  equal(b); }
     bool operator!=(LutRef const & b) const { return !equal(b); }
-
     struct Hash;
     std::size_t getHash() const;
 
-    // Size of internal structures
-
-    static unsigned arraySize(unsigned inputCnt);
-    static std::size_t bitCount(unsigned inputCnt);
-    unsigned arraySize() const;
-    std::size_t bitCount() const;
-
-    // To/from string represented as an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
+  // To/from string represented as an hexadecimal init; the init is ordered high-bit first, contrary to internal storage
     std::string str() const;
     void initFromStr(std::string const & init);
 
@@ -100,16 +129,17 @@ class LutRef{
     bool toggles(unsigned input) const;
     bool forcesValue(unsigned input, bool inVal, bool outVal) const;
 
+    // Possible simplifications/decompositions
+    bool hasDC() const;
+    bool hasSingleInputFactorization() const;
+    bool hasTwoInputFactorization() const;
+
     // Is a function unate for a given input, and if not how many bits are against the trend
     bool isUnate(unsigned input) const;
     bool isBinate(unsigned input) const;
     bool isUnate(unsigned input, bool polarity) const;
     std::size_t countUnate(unsigned input, bool polarity) const;
     std::size_t countUnate(unsigned input) const;
-
-    bool hasDC() const;
-    bool hasSingleInputFactorization() const;
-    bool hasTwoInputFactorization() const;
 
     // Get the cofactors, but keep the inputs in position (make the corresponding input DC)
     void setToCofactor(LutRef const & o, unsigned input, bool value);
@@ -118,7 +148,6 @@ class LutRef{
 
     // Get the cofactors, but reduce the number of inputs (the last input replaces the one that is removed)
     void setToCompactCofactor(LutRef const & o, unsigned input, bool value);
-    void setToCompactCofactor(unsigned input, bool value);
     void setFromCompactCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
 
     // Get a pseudo representant with some input/output inversions and input permutations; it is not unique but is a good approximation for a unique representant
@@ -126,20 +155,20 @@ class LutRef{
     void setToPseudoRepresentant();
     void setToPseudoRepresentant(LutRef const & o);
 
-    private:
-    // Helper functions
-    bool equal(LutRef const & o) const; // Defines equality operators
-    void swapToBegin(unsigned input); // Used in optimized swapInputs implementations
-    std::size_t countSetBits() const; // Used to compute a pseudorepresentant
-
     public:
     // Exception throwing
     void throwOutOfRange(unsigned input) const;
     void throwIncompatibleSize(LutRef const & o) const;
     void throwBadMask(std::size_t inputMask) const;
 
+    private:
+    // Helper functions
+    bool equal(LutRef const & o) const; // Defines equality operators
+    void swapToBegin(unsigned input); // Used in optimized swapInputs implementations
+    std::size_t countSetBits() const; // Used to compute a pseudorepresentant
+
     protected:
-    // Need to new/delete if managed, or increment if iterator
+    // Protected only: Need to new/delete if managed, or increment if iterator
     unsigned _inputCnt;
     LutMask* _lut;
 };

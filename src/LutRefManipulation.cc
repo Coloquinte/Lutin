@@ -8,6 +8,19 @@
 
 using namespace std;
 
+void LutRef::invert(){
+  for(unsigned i=0; i<arraySize(); ++i){
+    _lut[i] = ~_lut[i];
+  }
+}
+
+void LutRef::setToInverted(LutRef const & o){
+  checkInputCounts(*this, o);
+  for(unsigned i=0; i<arraySize(); ++i){
+    _lut[i] = ~o._lut[i];
+  }
+}
+
 bool LutRef::equal(LutRef const & b) const{
   if(inputCount() != b.inputCount()) return false;
   if(inputCount() <= 6){ // Safe while I don't force the unused bits to 0
@@ -29,12 +42,6 @@ bool LutRef::evaluate(std::size_t inputValues) const{
 
   unsigned chunkInd = inputValues & 0x003f;
   return ((_lut[lutChunk] >> chunkInd) & 0x01) != 0;
-}
-
-void LutRef::invert(){
-  for(unsigned i=0; i<arraySize(); ++i){
-    _lut[i] = ~_lut[i];
-  }
 }
 
 void LutRef::setVal(std::size_t inputValues, bool val){
@@ -97,6 +104,12 @@ void LutRef::invertInput(unsigned input){
       }
     }
   }
+}
+
+void LutRef::setToInvertedInput(LutRef const & o, unsigned input){
+  checkInputCounts(*this, o);
+  operator=(o);
+  invertInput(input);
 }
 
 void LutRef::setToSwappedInputs(LutRef const & a, unsigned i1, unsigned i2){
