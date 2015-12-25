@@ -14,6 +14,7 @@ set(CPPS
   src/LutRefConstruction.cc
   src/LutRefManipulation.cc
   src/LutPrint.cc
+  src/LutExcept.cc
 )
 
 set(TESTCPPS

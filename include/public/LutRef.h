@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <string>
 #include <algorithm>
-#include <stdexcept>
 
 class LutRef{
     public:
@@ -48,13 +47,13 @@ class LutRef{
     // Basic modifiers: invert one input or the output
     void invertInput(unsigned input);
     void invert();
-    void setVal(unsigned inputValues, bool val);
+    void setVal(std::size_t inputValues, bool val);
     void swapInputs(unsigned i1, unsigned i2);
     void setToSwappedInputs(LutRef const & o, unsigned i1, unsigned i2);
 
     // Basic queries
     unsigned inputCount() const { return _inputCnt; }
-    bool evaluate(unsigned inputValues) const;
+    bool evaluate(std::size_t inputValues) const;
 
     bool isConstant() const;
     bool isConstant(bool val) const;
@@ -133,6 +132,12 @@ class LutRef{
     void swapToBegin(unsigned input); // Used in optimized swapInputs implementations
     std::size_t countSetBits() const; // Used to compute a pseudorepresentant
 
+    public:
+    // Exception throwing
+    void throwOutOfRange(unsigned input) const;
+    void throwIncompatibleSize(LutRef const & o) const;
+    void throwBadMask(std::size_t inputMask) const;
+
     protected:
     // Need to new/delete if managed, or increment if iterator
     unsigned _inputCnt;
@@ -158,36 +163,14 @@ inline std::size_t LutRef::bitCount() const{
   return bitCount(inputCount());
 }
 
-inline void checkInputCounts(LutRef const & a, LutRef const & b){
-  if(a.inputCount() != b.inputCount()){
-    throw std::logic_error("Luts have different input counts");
-  }
-}
-
-inline void checkInput(LutRef const & lut, unsigned input) {
-  if(input >= lut.inputCount()){
-    throw std::logic_error("Out of range Lut input");
-  }
-}
-
-inline void checkSizeMinusOne(LutRef const & a, LutRef const & b){
-  if(a.inputCount()-1 != b.inputCount()){
-    throw std::logic_error("Luts have incompatible sizes");
-  }
-}
-
-inline void checkInputMask(LutRef const & lut, unsigned inputValues) {
-  if(inputValues >= (1u<<lut.inputCount())){
-    throw std::logic_error("Out of range bits are set in the given input mask");
-  }
-}
-
 inline LutRef::LutRef(unsigned inputs, LutMask* pt)
 : _inputCnt(inputs)
 , _lut(pt) {
 }
 
 inline LutRef& LutRef::operator=(LutRef const & a){
+  if(inputCount() != a.inputCount()) throwIncompatibleSize(a);
+
   for(unsigned i=0; i<arraySize(); ++i){
     _lut[i] = a._lut[i];
   }

@@ -21,7 +21,7 @@ bool LutRef::equal(LutRef const & b) const{
   }
 }
 
-bool LutRef::evaluate(unsigned inputValues) const{
+bool LutRef::evaluate(std::size_t inputValues) const{
   checkInputMask(*this, inputValues);
 
   unsigned lutChunk = inputValues >> 6;
@@ -37,7 +37,7 @@ void LutRef::invert(){
   }
 }
 
-void LutRef::setVal(unsigned inputValues, bool val){
+void LutRef::setVal(std::size_t inputValues, bool val){
   checkInputMask(*this, inputValues);
 
   unsigned lutChunk = inputValues >> 6;

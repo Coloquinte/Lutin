@@ -39,6 +39,31 @@ const std::uint64_t xorMask = 0x6996966996696996;
 inline LutRef::LutMask getSizeMask(unsigned inputCount){
   return inputCount >= 6 ? lutSizeMask[6] : lutSizeMask[inputCount];
 }
+
+inline void checkInput(LutRef const & lut, unsigned input) {
+  if(input >= lut.inputCount()){
+    lut.throwOutOfRange(input);
+  }
+}
+
+inline void checkInputCounts(LutRef const & a, LutRef const & b){
+  if(a.inputCount() != b.inputCount()){
+    a.throwIncompatibleSize(b);
+  }
+}
+
+inline void checkSizeMinusOne(LutRef const & a, LutRef const & b){
+  if(a.inputCount()-1 != b.inputCount()){
+    a.throwIncompatibleSize(b);
+  }
+}
+
+inline void checkInputMask(LutRef const & lut, unsigned inputValues) {
+  if(inputValues >= (1u<<lut.inputCount())){
+    lut.throwBadMask(inputValues);
+  }
+}
+
 }
 
 #endif
