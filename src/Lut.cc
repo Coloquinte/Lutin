@@ -6,10 +6,6 @@
 
 using namespace std;
 
-Lut::Lut(unsigned inputCount) 
-: LutRef(inputCount, new LutMask[arraySize(inputCount)]) {
-}
-
 Lut::Lut(unsigned inputCount, unsigned long mask) : Lut(inputCount) {
   if(inputCount > 6){
     throw std::logic_error("Too many inputs to be constructed from an unsigned long");
@@ -19,32 +15,6 @@ Lut::Lut(unsigned inputCount, unsigned long mask) : Lut(inputCount) {
   }
 
   _lut[0] = mask;
-}
-
-Lut::Lut(Lut const & o) : Lut(o.inputCount()){
-  for(unsigned i=0; i<arraySize(); ++i){
-    _lut[i] = o._lut[i];
-  }
-}
-
-Lut& Lut::operator=(LutRef const & o){
-  setInputCount(o.inputCount());
-  LutRef::operator=(o);
-  return *this;
-}
-
-Lut::~Lut(){
-  delete[] _lut;
-}
-
-void Lut::setInputCount(unsigned inputCnt){
-  LutMask* tmp = new LutMask[arraySize(inputCnt)];
-  for(unsigned i=0; i<arraySize(min(inputCnt, inputCount())); ++i){
-    tmp[i] = _lut[i];
-  }
-  delete[] _lut;
-  _lut = tmp;
-  _inputCnt = inputCnt;
 }
 
 namespace{

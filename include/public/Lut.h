@@ -68,5 +68,35 @@ inline Lut operator~(LutRef const & a) {
   return Lut::Not(a);
 }
 
+inline Lut::Lut(unsigned inputCount) 
+: LutRef(inputCount, new LutMask[arraySize(inputCount)]) {
+}
+
+inline Lut::Lut(Lut const & o) : Lut(o.inputCount()){
+  for(unsigned i=0; i<arraySize(); ++i){
+    _lut[i] = o._lut[i];
+  }
+}
+
+inline Lut& Lut::operator=(LutRef const & o){
+  setInputCount(o.inputCount());
+  LutRef::operator=(o);
+  return *this;
+}
+
+inline Lut::~Lut(){
+  delete[] _lut;
+}
+
+inline void Lut::setInputCount(unsigned inputCnt){
+  LutMask* tmp = new LutMask[arraySize(inputCnt)];
+  for(unsigned i=0; i<arraySize(std::min(inputCnt, inputCount())); ++i){
+    tmp[i] = _lut[i];
+  }
+  delete[] _lut;
+  _lut = tmp;
+  _inputCnt = inputCnt;
+}
+
 #endif
 

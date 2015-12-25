@@ -4,6 +4,8 @@
 
 #include <cstdint>
 #include <string>
+#include <algorithm>
+#include <stdexcept>
 
 class LutRef{
     public:
@@ -155,6 +157,44 @@ inline std::size_t LutRef::bitCount(unsigned inputCnt) {
 inline std::size_t LutRef::bitCount() const{
   return bitCount(inputCount());
 }
+
+inline void checkInputCounts(LutRef const & a, LutRef const & b){
+  if(a.inputCount() != b.inputCount()){
+    throw std::logic_error("Luts have different input counts");
+  }
+}
+
+inline void checkInput(LutRef const & lut, unsigned input) {
+  if(input >= lut.inputCount()){
+    throw std::logic_error("Out of range Lut input");
+  }
+}
+
+inline void checkSizeMinusOne(LutRef const & a, LutRef const & b){
+  if(a.inputCount()-1 != b.inputCount()){
+    throw std::logic_error("Luts have incompatible sizes");
+  }
+}
+
+inline void checkInputMask(LutRef const & lut, unsigned inputValues) {
+  if(inputValues >= (1u<<lut.inputCount())){
+    throw std::logic_error("Out of range bits are set in the given input mask");
+  }
+}
+
+inline LutRef::LutRef(unsigned inputs, LutMask* pt)
+: _inputCnt(inputs)
+, _lut(pt) {
+}
+
+inline LutRef& LutRef::operator=(LutRef const & a){
+  for(unsigned i=0; i<arraySize(); ++i){
+    _lut[i] = a._lut[i];
+  }
+  return *this;
+}
+
+
 
 #endif
 

@@ -15,11 +15,6 @@
 
 using namespace std;
 
-LutRef::LutRef(unsigned inputs, LutMask* pt)
-: _inputCnt(inputs)
-, _lut(pt) {
-}
-
 bool LutRef::isConstant() const {
   return isGnd() || isVcc();
 }
@@ -128,14 +123,6 @@ void LutRef::setBuf(unsigned wireInput){
 
 void LutRef::setInv(unsigned wireInput){
   setWire(wireInput, true );
-}
-
-LutRef& LutRef::operator=(LutRef const & a){
-  checkInputCounts(*this, a);
-  for(unsigned i=0; i<arraySize(); ++i){
-    _lut[i] = a._lut[i];
-  }
-  return *this;
 }
 
 void LutRef::setNot(LutRef const & a){
