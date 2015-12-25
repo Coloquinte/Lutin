@@ -10,18 +10,22 @@
 
 using namespace std;
 
+void testSymmetry(Lut const & lut){
+  for(unsigned i1=0; i1+1<lut.inputCount(); ++i1){
+    for(unsigned i2=i1; i2<lut.inputCount(); ++i2){
+      if(Lut::SwappedInputs(lut, i1, i2) != lut){
+        cerr << "Inputs " << i1 << " and " << i2 << " of Lut " << lut << " are not symmetrical" << endl;
+        abort();
+      }
+    }
+  }
+}
+
 void testCofactors(Lut const & lut){
   for(unsigned in=0; in<lut.inputCount(); ++in){
     Lut posCofactor = lut.getCofactor(in, true);
     Lut negCofactor = lut.getCofactor(in, false);
     if(Lut::FromCofactors(negCofactor, posCofactor, in) != lut){
-      cerr << lut.inputCount() << "-input lut failed cofactor test " << in << endl;
-      abort();
-    }
-
-    Lut posCompactCofactor = lut.getCompactCofactor(in, true);
-    Lut negCompactCofactor = lut.getCompactCofactor(in, false);
-    if(Lut::FromCompactCofactors(negCompactCofactor, posCompactCofactor, in) != lut){
       cerr << lut.inputCount() << "-input lut failed cofactor test " << in << endl;
       abort();
     }
@@ -109,9 +113,11 @@ void genericTests(Lut const & lut){
 }
 
 void testSimpleGate(Lut const & lut){
-  if(lut.hasDC() || !lut.hasSingleInputFactorization() || !lut.hasTwoInputFactorization()){
-    cerr << "Failed algorithm check" << endl;
-    abort();
+  if(lut.inputCount() >= 2){
+    if(lut.hasDC() || !lut.hasSingleInputFactorization() || !lut.hasTwoInputFactorization()){
+      cerr << "Failed algorithm check" << endl;
+      abort();
+    }
   }
 }
 
@@ -165,6 +171,9 @@ void testGeneralizedAnds(){
 void testAnd(){
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::And(i);
+    genericTests(lut);
+    testSimpleGate(lut);
+    testSymmetry(lut);
     Lut reference = getGeneralizedAnd(i, -1, false);
     if(reference != lut){
       cerr << "And check failed for " << lut << std::endl;
@@ -178,6 +187,9 @@ void testAnd(){
 void testOr(){
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::Or(i);
+    genericTests(lut);
+    testSimpleGate(lut);
+    testSymmetry(lut);
     Lut reference = getGeneralizedAnd(i, 0, true);
     if(reference != lut){
       cerr << "Or check failed for " << lut << std::endl;
@@ -190,6 +202,9 @@ void testOr(){
 void testNor(){
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::Nor(i);
+    genericTests(lut);
+    testSimpleGate(lut);
+    testSymmetry(lut);
     Lut reference = getGeneralizedAnd(i, 0, false);
     if(reference != lut){
       cerr << "Nor check failed for " << lut << std::endl;
@@ -202,6 +217,9 @@ void testNor(){
 void testNand(){
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::Nand(i);
+    genericTests(lut);
+    testSimpleGate(lut);
+    testSymmetry(lut);
     Lut reference = getGeneralizedAnd(i, -1, true);
     if(reference != lut){
       cerr << "Nand check failed for " << lut << std::endl;
@@ -212,10 +230,11 @@ void testNand(){
 }
 
 void testXor(){
-  for(unsigned i=2; i<15; ++i){
+  for(unsigned i=0; i<15; ++i){
     Lut lut = Lut::Xor(i);
     genericTests(lut);
     testSimpleGate(lut);
+    testSymmetry(lut);
     Lut reference = Lut::Exor(i);
     if(Lut::Not(reference) != lut){
       cerr << "Xor check failed for " << lut << std::endl;
@@ -332,8 +351,8 @@ int main(){
   testNand();
   testNor();
   testXor();
-  testRepresentants();
   testGeneralizedAnds();
+  testRepresentants();
 
   return 0;
 }
