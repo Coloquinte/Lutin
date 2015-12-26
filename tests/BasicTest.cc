@@ -114,8 +114,16 @@ void genericTests(Lut const & lut){
 
 void testSimpleGate(Lut const & lut){
   if(lut.inputCount() >= 2){
-    if(lut.hasDC() || !lut.hasSingleInputFactorization() || !lut.hasTwoInputFactorization()){
-      cerr << "Failed algorithm check" << endl;
+    if(lut.hasDC()){
+      cerr << "Failed algorithm check (DC)" << endl;
+      abort();
+    }
+    if(!lut.hasSingleInputFactorization()){
+      cerr << "Failed algorithm check (Single input)" << endl;
+      abort();
+    }
+    if(!lut.hasTwoInputFactorization()){
+      cerr << "Failed algorithm check (Two input)" << endl;
       abort();
     }
   }
@@ -159,16 +167,18 @@ void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 }
 
 void testGeneralizedAnds(){
+  cout << "Starting generalized And test" << std::endl;
   for(unsigned inCnt=2; inCnt<10u; ++inCnt){
     for(unsigned inMask=0; inMask < Lut::bitCount(inCnt); ++inMask){
       testGeneralizedAnd(inCnt, inMask, false);
       testGeneralizedAnd(inCnt, inMask, true);
     }
   }
-  cout << "Generalized And test OK" << std::endl;
+  cout << "\t... OK" << std::endl;
 }
 
 void testAnd(){
+  cout << "Starting And test" << std::endl;
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::And(i);
     genericTests(lut);
@@ -181,10 +191,11 @@ void testAnd(){
     }
   }
 
-  cout << "And test OK" << std::endl;
+  cout << "\t... OK" << std::endl;
 }
 
 void testOr(){
+  cout << "Starting Or test" << std::endl;
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::Or(i);
     genericTests(lut);
@@ -196,10 +207,11 @@ void testOr(){
       abort();
     }
   }
-  cout << "Or test OK" << std::endl;
+  cout << "\t... OK" << std::endl;
 }
 
 void testNor(){
+  cout << "Starting Nor test" << std::endl;
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::Nor(i);
     genericTests(lut);
@@ -211,10 +223,11 @@ void testNor(){
       abort();
     }
   }
-  cout << "Nor test OK" << std::endl;
+  cout << "\t... OK" << std::endl;
 }
 
 void testNand(){
+  cout << "Starting Nand test" << std::endl;
   for(unsigned i=0; i<15u; ++i){
     Lut lut = Lut::Nand(i);
     genericTests(lut);
@@ -226,10 +239,11 @@ void testNand(){
       abort();
     }
   }
-  cout << "Nand test OK" << std::endl;
+  cout << "\t... OK" << std::endl;
 }
 
 void testXor(){
+  cout << "Starting Xor test" << std::endl;
   for(unsigned i=0; i<15; ++i){
     Lut lut = Lut::Xor(i);
     genericTests(lut);
@@ -256,7 +270,7 @@ void testXor(){
       abort();
     }
   }
-  cout << "Xor test OK" << std::endl;
+  cout << "\t... OK" << std::endl;
 }
 
 void testBufCofactors(Lut const & wire, unsigned j){
@@ -279,6 +293,7 @@ void testBufCofactors(Lut const & wire, unsigned j){
 }
 
 void testBuf(){
+  cout << "Starting Buf test" << std::endl;
   for(unsigned i=1; i<15; ++i){
     for(unsigned j=0; j<i; ++j){
       Lut buf = Lut::Buf(j, i);
@@ -291,7 +306,7 @@ void testBuf(){
       testBufCofactors(inv, j);
     }
   }
-  cout << "Buf test OK" << std::endl;
+  cout << "\t... OK" << std::endl;
 }
 
 void testRepresentants(){

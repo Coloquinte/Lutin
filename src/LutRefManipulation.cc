@@ -21,17 +21,22 @@ void LutRef::setToInverted(LutRef const & o){
   }
 }
 
-bool LutRef::equal(LutRef const & b) const{
+bool LutRef::isEqual(LutRef const & b) const{
   if(inputCount() != b.inputCount()) return false;
-  if(inputCount() <= 6){ // Safe while I don't force the unused bits to 0
-    return ((_lut[0] ^ b._lut[0]) & lutSizeMask[inputCount()]) == 0;
+  for(unsigned i=0; i<arraySize(); ++i){
+    LutMask diff = (_lut[i] ^ b._lut[i]) & getSizeMask(inputCount());
+    if(diff != allZero) return false;
   }
-  else{
-    for(unsigned i=0; i<arraySize(); ++i){
-      if(_lut[i] != b._lut[i]) return false;
-    }
-    return true;
+  return true;
+}
+
+bool LutRef::isInverse(LutRef const & b) const{
+  if(inputCount() != b.inputCount()) return false;
+  for(unsigned i=0; i<arraySize(); ++i){
+    LutMask diff = (_lut[i] ^ b._lut[i]) | ~getSizeMask(inputCount());
+    if(diff != allOne) return false;
   }
+  return true;
 }
 
 bool LutRef::evaluate(std::size_t inputValues) const{
@@ -82,7 +87,7 @@ bool LutRef::isGeneralizedAnd() const{
 }
 
 bool LutRef::isGeneralizedXor() const{
-  return equal(Lut::Xor(inputCount())) || equal(Lut::Exor(inputCount()));
+  return isEqual(Lut::Xor(inputCount())) || isEqual(Lut::Exor(inputCount()));
 }
 
 void LutRef::invertInput(unsigned input){
@@ -297,7 +302,8 @@ bool LutRef::toggles(unsigned input) const{
 }
 
 bool LutRef::forcesValue(unsigned input, bool inVal, bool outVal) const{
-  assert(input < inputCount());
+  checkInput(*this, input);
+
   LutMask comp = outVal? allOne : allZero;
   if(input<6){
     LutMask inputMask = inVal? lutInputMask[input] : ~lutInputMask[input];
@@ -362,38 +368,24 @@ std::size_t LutRef::countUnate(unsigned input, bool polarity) const{
 }
 
 bool LutRef::hasSingleInputFactorization() const {
+  using namespace Simplification;
   for(unsigned i=0; i<inputCount(); ++i){
-    if(toggles(i)) return true;
-    if(forcesValue(i, false, false)) return true;
-    if(forcesValue(i, false, true )) return true;
-    if(forcesValue(i, true , false)) return true;
-    if(forcesValue(i, true , true )) return true;
+    OneInput cur = getSimplification(i);
+    if(cur != OneInput::None && cur != OneInput::DC){
+      return true;
+    }
   }
   return false;
 }
 
 bool LutRef::hasTwoInputFactorization() const {
-  Lut pos(inputCount());
-  Lut neg(inputCount());
-  Lut pospos(inputCount());
-  Lut posneg(inputCount());
-  Lut negpos(inputCount());
-  Lut negneg(inputCount());
+  using namespace Simplification;
   for(unsigned i=0; i+1<inputCount(); ++i){
-    pos.setToCofactor(*this, i, true);
-    neg.setToCofactor(*this, i, false);
     for(unsigned j=i+1; j<inputCount(); ++j){
-      pospos.setToCofactor(pos, j, true );
-      posneg.setToCofactor(pos, j, false);
-      negpos.setToCofactor(neg, j, true );
-      negneg.setToCofactor(neg, j, false);
-      // Now if there are only two possible cofactors we can factor it away
-      // Just forget about the DC cases
-      // First the And/Or type
-      if(pos == negneg || pos == negpos) return true;
-      if(neg == posneg || neg == pospos) return true;
-      // Then the Xor type
-      if(posneg == negpos && pospos == negneg) return true;
+      TwoInput cur = getSimplification(i, j);
+      if(cur != TwoInput::None && cur != TwoInput::Symm && cur != TwoInput::SymmInv){
+        return true;
+      }
     }
   }
   return false;
@@ -489,4 +481,44 @@ std::size_t LutRef::getHash() const {
   }
   return ret;
 }
+
+Simplification::OneInput LutRef::getSimplification(unsigned input) const {
+  checkInput(*this, input);
+
+  Lut posCofactor = Lut::Cofactor(*this, input, true);
+  Lut negCofactor = Lut::Cofactor(*this, input, false);
+
+  if(posCofactor.isEqual(negCofactor))         return Simplification::OneInput::DC;
+  else if(posCofactor.isInverse(negCofactor)) return Simplification::OneInput::Toggles;
+  else if(negCofactor.isGnd())                return Simplification::OneInput::F00;
+  else if(negCofactor.isVcc())                return Simplification::OneInput::F01;
+  else if(posCofactor.isGnd())                return Simplification::OneInput::F10;
+  else if(posCofactor.isVcc())                return Simplification::OneInput::F11;
+  else                                        return Simplification::OneInput::None;
+}
+
+Simplification::TwoInput LutRef::getSimplification(unsigned i1, unsigned i2) const {
+  Lut pos = Lut::Cofactor(*this, i1, true);
+  Lut neg = Lut::Cofactor(*this, i1, false);
+
+  Lut pospos = Lut::Cofactor(pos, i2, true );
+  Lut posneg = Lut::Cofactor(pos, i2, false);
+  Lut negpos = Lut::Cofactor(neg, i2, true );
+  Lut negneg = Lut::Cofactor(neg, i2, false);
+
+  // And factorization
+  if(pos == negpos) return Simplification::TwoInput::SAnd00;
+  if(pos == negneg) return Simplification::TwoInput::SAnd01;
+  if(neg == pospos) return Simplification::TwoInput::SAnd10;
+  if(neg == posneg) return Simplification::TwoInput::SAnd11;
+  // Xor factorization
+  if(posneg == negpos && pospos == negneg) return Simplification::TwoInput::SXor;
+  // No factorization, but some symmetry
+  if(posneg == negpos) return Simplification::TwoInput::Symm;
+  if(pospos == negneg) return Simplification::TwoInput::SymmInv;
+  // Nothing interesting
+  return Simplification::TwoInput::None;
+}
+
+
 

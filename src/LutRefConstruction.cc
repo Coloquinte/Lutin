@@ -40,12 +40,12 @@ bool LutRef::isVcc  () const {
 }
 
 // Quick and dirty for now
-bool LutRef::isAnd  () const { return equal(Lut::And(inputCount())); }
-bool LutRef::isOr   () const { return equal(Lut::Or(inputCount())); }
-bool LutRef::isNand () const { return equal(Lut::Nand(inputCount())); }
-bool LutRef::isNor  () const { return equal(Lut::Nor(inputCount())); }
-bool LutRef::isXor  () const { return equal(Lut::Xor(inputCount())); }
-bool LutRef::isExor () const { return equal(Lut::Exor(inputCount())); }
+bool LutRef::isAnd  () const { return isEqual(Lut::And(inputCount())); }
+bool LutRef::isOr   () const { return isEqual(Lut::Or(inputCount())); }
+bool LutRef::isNand () const { return isEqual(Lut::Nand(inputCount())); }
+bool LutRef::isNor  () const { return isEqual(Lut::Nor(inputCount())); }
+bool LutRef::isXor  () const { return isEqual(Lut::Xor(inputCount())); }
+bool LutRef::isExor () const { return isEqual(Lut::Exor(inputCount())); }
 
 void LutRef::setGnd(){
   for(unsigned i=0; i<arraySize(); ++i){

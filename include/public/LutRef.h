@@ -18,10 +18,32 @@ namespace Simplification{
   };
 
   enum struct TwoInput{
+    // Trivial symmetries (one input is DC) are ignored
     None,
+    // Symmetry with only two cofactors equal
     Symm,
-    SymmInv
+    SymmInv,
+    // Symmetry with three cofactors equal (can factor an And gate out)
+    SAnd00,
+    SAnd01,
+    SAnd10,
+    SAnd11,
+    // Symmetry with 2x2 equal cofactors (can factor a Xor gate out)
+    SXor
   };
+
+  inline bool isSymm(TwoInput symm){
+    return symm == TwoInput::Symm
+        || symm == TwoInput::SAnd00
+        || symm == TwoInput::SAnd11
+        || symm == TwoInput::SXor;
+  }
+  inline bool isSymmInv(TwoInput symm){
+    return symm == TwoInput::SymmInv
+        || symm == TwoInput::SAnd01
+        || symm == TwoInput::SAnd10
+        || symm == TwoInput::SXor;
+  }
 }
 
 class LutRef{
@@ -107,9 +129,20 @@ class LutRef{
     bool isGeneralizedAnd() const;
     bool isGeneralizedXor() const;
 
+  // Cofactor manipulations keeping the inputs in position (make the corresponding input DC)
+    void setToCofactor(LutRef const & o, unsigned input, bool value);
+    void setToCofactor(unsigned input, bool value);
+    void setFromCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
+
+  // Decompositions for one and two inputs
+    Simplification::OneInput getSimplification(unsigned input) const;
+    Simplification::TwoInput getSimplification(unsigned i1, unsigned i2) const;
+
   // Logic comparison + hash
-    bool operator==(LutRef const & b) const { return  equal(b); }
-    bool operator!=(LutRef const & b) const { return !equal(b); }
+    bool isEqual(LutRef const & o) const;
+    bool isInverse(LutRef const & o) const;
+    bool operator==(LutRef const & b) const { return  isEqual(b); }
+    bool operator!=(LutRef const & b) const { return !isEqual(b); }
     struct Hash;
     std::size_t getHash() const;
 
@@ -141,11 +174,6 @@ class LutRef{
     std::size_t countUnate(unsigned input, bool polarity) const;
     std::size_t countUnate(unsigned input) const;
 
-    // Get the cofactors, but keep the inputs in position (make the corresponding input DC)
-    void setToCofactor(LutRef const & o, unsigned input, bool value);
-    void setToCofactor(unsigned input, bool value);
-    void setFromCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
-
     // Get the cofactors, but reduce the number of inputs (the last input replaces the one that is removed)
     void setToCompactCofactor(LutRef const & o, unsigned input, bool value);
     void setFromCompactCofactors(LutRef const & neg, LutRef const & pos, unsigned input);
@@ -163,7 +191,6 @@ class LutRef{
 
     private:
     // Helper functions
-    bool equal(LutRef const & o) const; // Defines equality operators
     void swapToBegin(unsigned input); // Used in optimized swapInputs implementations
     std::size_t countSetBits() const; // Used to compute a pseudorepresentant
 
