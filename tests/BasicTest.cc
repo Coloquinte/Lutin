@@ -32,30 +32,6 @@ void testCofactors(Lut const & lut){
   }
 }
 
-void testForce(Lut const & lut){
-  for(unsigned in=0; in<lut.inputCount(); ++in){
-    Lut posCofactor = lut.getCofactor(in, true);
-    Lut negCofactor = lut.getCofactor(in, false);
-    if(!posCofactor.isDC(in) || !negCofactor.isDC(in)){
-      cerr << lut.inputCount() << "-input lut failed DC test" << in << std::endl;
-      abort();
-    }
-
-    bool forceMismatch = false;
-
-    if(lut.toggles(in) != (negCofactor == Lut::Not(posCofactor))) forceMismatch = true;
-    if(lut.forcesValue(in, false, false) != negCofactor.isConstant(false)) forceMismatch = true;
-    if(lut.forcesValue(in, false, true ) != negCofactor.isConstant(true )) forceMismatch = true;
-    if(lut.forcesValue(in, true , false) != posCofactor.isConstant(false)) forceMismatch = true;
-    if(lut.forcesValue(in, true , true ) != posCofactor.isConstant(true )) forceMismatch = true;
-    
-    if(forceMismatch){
-      cerr << lut.inputCount() << "-input lut failed forcer test " << in << endl;
-      abort();
-    }
-  }
-}
-
 void testRepresentant(Lut const & lut){
   Lut pseudoRepr = lut.getPseudoRepresentant();
   if(lut.isPseudoRepresentant() && lut != pseudoRepr){
@@ -108,7 +84,6 @@ void genericTests(Lut const & lut){
   testInvertInput(lut);
   testSwapInputs(lut);
   testCofactors(lut);
-  testForce(lut);
   testRepresentant(lut);
 }
 
@@ -137,24 +112,27 @@ Lut getGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
 }
 
 void testGeneralizedAnd(unsigned inputCnt, unsigned inputValues, bool inverted){
+  using namespace Simplification;
+
   Lut lut = getGeneralizedAnd(inputCnt, inputValues, inverted);
   genericTests(lut);
   testSimpleGate(lut);
+
   for(unsigned in=0; in<inputCnt; ++in){
     bool forcingIn = ((inputValues >> in) & 0x1) == 0, forcedVal = inverted;
-    if(!lut.forcesValue(in, forcingIn, forcedVal)){
-      cerr << inputCnt << "-input generalized And gate forcing failed on input " << in << std::endl;
+    OneInput expected = forcingIn ?
+      (forcedVal ? OneInput::F11 : OneInput::F10)
+    : (forcedVal ? OneInput::F01 : OneInput::F00);
+    if(lut.getSimplification(in) != expected){
+      cerr << inputCnt << "-input simplification check failed on input " << in << std::endl;
       abort();
     }
-    if(lut.forcesValue(in, forcingIn, !forcedVal) || lut.forcesValue(in, !forcingIn, true) || lut.forcesValue(in, !forcingIn, false)){
-      cerr << inputCnt << "-input generalized And gate false positive on input " << in << std::endl;
-      abort();
-    }
-    if(!lut.isUnate(in)){
+    if(!lut.isUnate(in, forcingIn == forcedVal)){
       cerr << inputCnt << "-input generalized And gate unate check failed on input " << in << std::endl;
       abort();
     }
   }
+
   if(!lut.isGeneralizedAnd()){
     cerr << "Generalized And check failed for " << inputCnt << " input" << std::endl;
     abort();
@@ -256,7 +234,7 @@ void testXor(){
     }
     testSaveReload(lut);
     for(unsigned in=0; in<i; ++in){
-      if(!lut.toggles(in)){
+      if(lut.getSimplification(in) != Simplification::OneInput::Toggles){
         cerr << i << "-input Xor gate toggle check failed for input " << in << std::endl;
         abort();
       }
@@ -280,13 +258,13 @@ void testBufCofactors(Lut const & wire, unsigned j){
         cerr << "Buffer cofactor test failed" << endl;
         abort();
       }
-      if(!wire.isDC(k)){
+      if(wire.getSimplification(k) != Simplification::OneInput::DC){
         cerr << "Buffer DC check failed" << endl;
         abort();
       }
     }
   }
-  if(wire.isDC(j)){
+  if(wire.getSimplification(j) == Simplification::OneInput::DC){
     cerr << "Buffer sensitivity check failed" << endl;
     abort();
   }

@@ -150,18 +150,6 @@ class LutRef{
     std::string str() const;
     void initFromStr(std::string const & init);
 
-    /*
-     * Logic queries
-     *   * Is an input a don't care (no influence on the output result)?
-     *   * Does the input toggle the output value?
-     *   * Does a particular value at one input force the output value?
-     *   * Test if the Lut can be simplified in smaller disjoint Luts
-     */
-
-    bool isDC(unsigned input) const;
-    bool toggles(unsigned input) const;
-    bool forcesValue(unsigned input, bool inVal, bool outVal) const;
-
     // Possible simplifications/decompositions
     bool hasDC() const;
     bool hasSingleInputFactorization() const;

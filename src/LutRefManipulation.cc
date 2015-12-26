@@ -256,83 +256,6 @@ void LutRef::setFromCompactCofactors(LutRef const & neg, LutRef const & pos, uns
   swapInputs(inputCount()-1, input);
 }
 
-// The 3 following algorithms use a bitmask accumulator rather than an early exit: it is believed - but not tested - to be faster, with fewer instructions and better branch prediction
-
-bool LutRef::isDC(unsigned input) const{
-  assert(input < inputCount());
-  if(input < 6){
-    LutMask acc = allZero;
-    for(unsigned i=0; i<arraySize(); ++i){
-      acc |= (_lut[i] << (1<<input)) ^ _lut[i];
-    }
-    return (acc & lutInputMask[input]) == allZero;
-  }
-  else{
-    LutMask acc = allZero;
-    unsigned const stride = 1<<(input-6);
-    for(unsigned i=0; i<arraySize(); i += 2*stride){
-      for(unsigned j=i; j<i+stride; ++j){
-        acc |= (_lut[j] ^ _lut[j+stride]);
-      }
-    }
-    return acc == allZero;
-  }
-}
-
-bool LutRef::toggles(unsigned input) const{
-  assert(input < inputCount());
-  if(input < 6){
-    LutMask acc = allOne;
-    for(unsigned i=0; i<arraySize(); ++i){
-      acc &= (_lut[i] << (1<<input)) ^ _lut[i];
-    }
-    LutMask excludeMask = ~lutInputMask[input] | ~getSizeMask(inputCount());
-    return (acc | excludeMask) == allOne;
-  }
-  else{
-    LutMask acc = allOne;
-    unsigned const stride = 1<<(input-6);
-    for(unsigned i=0; i<arraySize(); i += 2*stride){
-      for(unsigned j=i; j<i+stride; ++j){
-        acc &= (_lut[j] ^ _lut[j+stride]);
-      }
-    }
-    return acc == allOne;
-  }
-}
-
-bool LutRef::forcesValue(unsigned input, bool inVal, bool outVal) const{
-  checkInput(*this, input);
-
-  LutMask comp = outVal? allOne : allZero;
-  if(input<6){
-    LutMask inputMask = inVal? lutInputMask[input] : ~lutInputMask[input];
-    LutMask excludeMask = inputMask & getSizeMask(inputCount());
-    LutMask acc = allZero;
-    for(unsigned i=0; i<arraySize(); ++i){
-      acc |= (_lut[i] ^ comp);
-    }
-    return (acc & excludeMask) == allZero;
-  }
-  else{
-    LutMask acc = allZero;
-    unsigned const stride = 1<<(input-6);
-    for(unsigned i=inVal? stride : 0; i<arraySize(); i += 2*stride){
-      for(unsigned j=i; j<i+stride; ++j){
-        acc |= (_lut[j] ^ comp);
-      }
-    }
-    return acc == allZero;
-  }
-}
-
-bool LutRef::hasDC() const {
-  for(unsigned i=0; i<inputCount(); ++i){
-    if(isDC(i)) return true;
-  }
-  return false;
-}
-
 bool LutRef::isUnate(unsigned input) const {
   return isUnate(input, false) || isUnate(input, true);
 }
@@ -365,6 +288,13 @@ std::size_t LutRef::countUnate(unsigned input, bool polarity) const{
   else{
     return (negCofactor | ~posCofactor).countSetBits();
   }
+}
+
+bool LutRef::hasDC() const {
+  for(unsigned i=0; i<inputCount(); ++i){
+    if(getSimplification(i) == Simplification::OneInput::DC) return true;
+  }
+  return false;
 }
 
 bool LutRef::hasSingleInputFactorization() const {
